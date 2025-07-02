@@ -1,0 +1,41 @@
+{# app_film/templates/app_film/movie_details.html #}
+
+<div class="movie-detail">
+  <div class="movie-poster-detail">
+    {# Usa direttamente image_url, che è un link completo al poster #}
+    <img src="{{ image_url|escape }}" alt="{{ film.titolo|escape }}" style="max-width:100%; height:auto; border-radius:8px; margin-bottom:1em;" />
+  </div>
+
+  <h2>{{ film.titolo|escape }}</h2>
+  <ul class="movie-meta">
+    <li>
+      <strong>Anno:</strong> {{ film.anno }}
+    </li>
+    <li>
+      <strong>Durata:</strong> {{ film.durata }} min
+    </li>
+    <li>
+      <strong>Lingua:</strong> {{ film.lingua }}
+    </li>
+  </ul>
+
+  <h3>Proiezioni del {{ filmDate|escape }}</h3>
+
+  {% if showtimes %}
+    <ul class="showtimes-list">
+      {% for p in showtimes %}
+        <li class="showtime-item" data-numero="{{ p.sala_numero }}" data-tipo="{{ p.sala_tipo|escape }}" data-dim="{{ p.sala_dim }}" data-posti="{{ p.sala_numposti }}" data-file="{{ p.sala_numfile }}" data-posti-fila="{{ p.sala_numpostiperfila }}">
+          <span class="showtime-hour">{{ p.ora }}</span>
+          <span class="showtime-room">
+            Sala {{ p.sala_numero }}
+            {% if p.icon_url %}
+              <img src="{{ p.icon_url|escape }}" class="sala-icon" alt="{{ p.sala_tipo|escape }}" />
+            {% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Al momento non ci sono proiezioni programmate per questa data.</p>
+  {% endif %}
+</div>

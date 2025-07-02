@@ -1,0 +1,140 @@
+/* User Card */
+.user-card {
+  max-width: 900px;
+  margin: 7rem auto 3rem;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.user-card h1 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.user-card .avatar {
+  flex-shrink: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #580000;
+}
+
+.user-card .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-card .user-info p {
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.user-card .user-info p strong {
+  color: #580000;
+}
+
+.ticket-list {
+  color: black;
+  margin: 2rem auto 3rem;
+  max-width: 1600px;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 2rem;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-list table {
+  width: 100%;
+  min-width: 900px;
+  max-width: 1200px;
+  margin: 0 auto 1rem;
+  border-collapse: collapse;
+}
+
+.ticket-list h1 {
+  text-align: center;
+  color: var(--primary-color);
+  margin-bottom: 2rem;
+}
+
+.ticket-list thead {
+  background-color: #580000;
+  color: #fff;
+}
+
+.ticket-list th,
+.ticket-list td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: 1px solid #ddd;
+
+}
+
+.ticket-list td {
+  color: var(--dark-color);
+}
+
+.ticket-list tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.ticket-list tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.ticket-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+  min-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.ticket-list::-webkit-scrollbar {
+  height: 12px;
+  background: #e0dede;
+  border-radius: 8px;
+}
+
+.ticket-list::-webkit-scrollbar-thumb {
+  background: #5f0000;
+  border-radius: 8px;
+  border: 1px solid #fff;
+}
+
+.ticket-list::-webkit-scrollbar-thumb:hover {
+  background: #8b2424;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.btn-icon img {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease;
+  display: block;
+  margin: auto;
+}
+
+.btn-icon:hover img {
+  transform: scale(1.2);
+}

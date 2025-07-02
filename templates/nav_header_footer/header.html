@@ -1,0 +1,30 @@
+{# templates/nav_header_footer/header.html #}
+{% load static %}
+<header class="main-header">
+  <div class="header-content">
+    <h1 class="logo">Code<span>Crafters</span></h1>
+    <div class="user-actions">
+      {% if user.is_authenticated %}
+        <div class="user-area">
+          <span class="user-name">{{ user.get_username }}</span>
+          <form method="post" action="{% url 'app_login_logout:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+              <img src="https://cdn-icons-png.flaticon.com/128/1828/1828427.png" alt="Logout" class="logout-icon" />
+              Logout
+            </button>
+          </form>
+        </div>
+      {% else %}
+        <a href="{% url 'app_login_logout:auth' %}" class="btn-login"><i class="fas fa-user"></i> Login</a>
+        <a href="{% url 'app_login_logout:auth' %}#signup" class="btn-register">SignUp</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if user.is_authenticated %}
+    <script>
+      window.userMail = '{{ user.email|escapejs }}'
+    </script>
+  {% endif %}
+</header>

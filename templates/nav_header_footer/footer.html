@@ -1,0 +1,54 @@
+{# templates/nav_header_footer/footer.html #}
+{% load static %}
+
+<footer class="main-footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>Info</h3>
+      <ul>
+        <li><a href="javascript:void(0)">Chi siamo</a></li>
+        <li><a href="javascript:void(0)">Lavora con noi</a></li>
+        <li><a href="javascript:void(0)">Contatti</a></li>
+        <li><a href="javascript:void(0)">Privacy Policy</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h3>Cinema</h3>
+      <ul>
+        <li><a href="javascript:void(0)">Sale e servizi</a></li>
+        <li><a href="javascript:void(0)">Accessibilità</a></li>
+        <li><a href="javascript:void(0)">Eventi speciali</a></li>
+        <li><a href="javascript:void(0)">Regolamento</a></li>
+      </ul>
+    </div>
+    <div class="footer-section">
+      <h3>Social</h3>
+      <div class="social-icons">
+        <a href="javascript:void(0)"><i class="fab fa-facebook-f"></i></a>
+        <a href="javascript:void(0)"><i class="fab fa-twitter"></i></a>
+        <a href="javascript:void(0)"><i class="fab fa-instagram"></i></a>
+        <a href="javascript:void(0)"><i class="fab fa-youtube"></i></a>
+      </div>
+      <div class="newsletter">
+        <h4>Iscriviti alla newsletter</h4>
+        <form id="newsletter-form" method="post" action="#">
+          {% csrf_token %}
+          <input
+            type="email"
+            id="newsletter-email"
+            name="email"
+            placeholder="La tua email"
+            required
+            class="form-control"
+          >
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2025 CodeCrafters</p>
+  </div>
+</footer>

@@ -1,0 +1,167 @@
+{# templates/app_biglietti/biglietti.html #}
+{% extends "base.html" %}
+{% load static %}
+{% load json_script %}
+
+{% block extra_head %}
+  {# CSS locali dell’app biglietti #}
+  <link rel="stylesheet" href="{% static 'app_biglietti/biglietti.css' %}">
+  {# CSS generali di navigazione #}
+  <link rel="stylesheet" href="{% static 'app_nav/style.css' %}">
+  {# Font Awesome e Flat Icons #}
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+  >
+  <link
+    href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css"
+    rel="stylesheet"
+  />
+  {# SweetAlert2 #}
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+  >
+{% endblock %}
+
+{% block title %}CodeCrafters – Prenotazione Biglietti{% endblock %}
+
+{% block content %}
+  {# Navbar comune #}
+  {% include 'nav_header_footer/navbar.html' %}
+
+  <div class="right-content">
+    <div class="container">
+      <section id="filtro" class="search-section">
+        <div class="centralbar">
+          <div class="booking-steps">
+            <div class="step{% if film_id|default:0 > 0 %} completed{% endif %}">
+              1. Scegli il film
+            </div>
+            <div class="step{% if film_id|default:0 > 0 and date_param %} completed{% endif %}">
+              2. Seleziona orario
+            </div>
+            <div class="step{% if film_id|default:0 > 0 and date_param %} completed{% endif %}">
+              3. Scegli i posti
+            </div>
+            <div class="step{% if film_id|default:0 > 0 and date_param %} completed{% endif %}">
+              4. Pagamento
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="row row-top">
+        <div class="movie-selection">
+          <div class="movie-card selected-movie">
+            <img
+              src="{% static 'immagini/' %}{{ poster_url|default:'default.jpg' }}"
+              alt="Locandina {{ film_data.titolo|default:'' }}"
+            >
+          </div>
+        </div>
+
+        <div class="datetime-picker">
+          <div class="movie-title">
+            <h3>Titolo:</h3>
+            <span>{{ film_data.titolo }}</span>
+          </div>
+          <div class="movie-language">
+            <h3>Lingua:</h3>
+            <span class="rating">{{ film_data.lingua }}</span>
+          </div>
+          <div class="movie-duration">
+            <h3>Durata:</h3>
+            <span class="duration">{{ film_data.durata }} min</span>
+          </div>
+          <div class="data-picker">
+            <h3>Giorno:</h3>
+            <span id="data" class="selected-date">{{ date_param }}</span>
+          </div>
+          <div class="sala-picker">
+            <h3>Orari disponibili:</h3>
+          </div>
+          <div class="time-slots">
+            {% if times %}
+              {% for t in times %}
+                {% with t_short=t|stringformat:"s"|slice:":5" %}
+                  <button
+                    class="time-slot{% if t_short == time_param|slice:":5" %} selected{% endif %}"
+                    data-time="{{ t_short }}"
+                  >
+                    {{ t_short }}
+                  </button>
+                {% endwith %}
+              {% endfor %}
+            {% else %}
+              <p>Nessun orario disponibile per questa data.</p>
+            {% endif %}
+          </div>
+          <div class="sala-picker">
+            <h3>Sala:</h3>
+            <span id="sala" class="selected-date">{{ sala_param }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row row-middle">
+        <div class="main-content">
+          <div class="screen">SCHERMO</div>
+          <div class="seat-legend">
+            <div class="legend-item">
+              <div class="seat-sample available"></div><span>Disponibile</span>
+            </div>
+            <div class="legend-item">
+              <div class="seat-sample selected"></div><span>Selezionato</span>
+            </div>
+            <div class="legend-item">
+              <div class="seat-sample occupied"></div><span>Occupato</span>
+            </div>
+            <div class="legend-item">
+              <div class="seat-sample vip"></div><span>VIP</span>
+            </div>
+          </div>
+          <div class="seats-grid-wrapper">
+            <div class="seats-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row row-bottom">
+        <div class="cart-summary">
+          <h3>Il tuo ordine:</h3>
+          <ul class="selected-seats"></ul>
+          <div class="total-price">
+            <span>Totale (€):</span><span id="total">0.00</span>
+          </div>
+          <div class="promo-section">
+            <input type="text" placeholder="Inserisci codice promozionale">
+            <button class="apply-promo">Applica</button>
+          </div>
+          <button class="checkout-button">Procedi al pagamento</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Footer comune #}
+  {% include 'nav_header_footer/footer.html' %}
+{% endblock %}
+
+{% block extra_js %}
+  {# Imposto la variabile JS userMail, passata dal context #}
+  <script>
+    const userMail = {{ user_mail|default:"null"|json_script:"userMail" }};
+  </script>
+
+  {# Flatpickr e SweetAlert2 #}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+
+  {# JS locale dell’app biglietti #}
+  <script src="{% static 'app_biglietti/biglietti.js' %}"></script>
+  {# JS di navigazione (navbar, footer) #}
+  <script src="{% static 'app_nav/nav.js' %}"></script>
+  <script src="{% static 'app_nav/footer.js' %}"></script>
+{% endblock %}

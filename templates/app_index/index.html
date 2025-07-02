@@ -1,0 +1,299 @@
+{# templates/app_index/index.html #}
+{% extends "base.html" %}
+{% load static %}
+{% load tz %}
+
+{# ===================== HEAD DEL TEMPLATE ===================== #}
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'app_index/index.css' %}" />
+  <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
+  <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+{% endblock %}
+
+{# ===================== TITLE DEL BROWSER ===================== #}
+{% block title %}
+  CodeCrafters – Home
+{% endblock %}
+
+{# ===================== CONTENUTO PRINCIPALE ===================== #}
+{% block content %}
+  {# Navbar e sidebar #}
+  {% include 'nav_header_footer/header.html' %}
+  {% include 'nav_header_footer/navbar.html' %}
+
+  <div class="right-content">
+    <section id="filtro" class="search-section">
+      <div class="container">
+        <form class="search-form" action="{% url 'app_biglietti:prenota_biglietto' %}" method="get">
+          <div class="form-group" style="position: relative;">
+            <label for="film"><i class="fas fa-film"></i> Film:</label>
+            <input
+              type="text"
+              id="film"
+              name="film_name"
+              placeholder="Cerca un film..."
+              autocomplete="off"
+              class="form-control"
+            />
+            <input type="hidden" id="film-id" name="film" />
+            <div id="film-suggestions" class="film-suggestions"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="data"><i class="far fa-calendar-alt"></i> Data:</label>
+            <input type="text" id="data" name="date" placeholder="Seleziona una data" readonly class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="orario"><i class="far fa-clock"></i> Orario:</label>
+            <select id="orario" name="orario" class="form-control">
+              <option value="">Seleziona un orario</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="sala"><i class="fas fa-theater-masks"></i> Sala:</label>
+            <div id="sala" class="sala"></div>
+            <input type="hidden" id="sala-hidden" name="sala" />
+          </div>
+
+          <button type="submit" class="btn-search btn btn-primary"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+    </section>
+
+    <main class="container">
+      <section class="now-showing">
+        <h2><i class="fas fa-star"></i> Proiezioni consigliate</h2>
+        <div class="carousel-wrapper">
+          <button class="carousel-btn prev" aria-label="Precedente">‹</button>
+          <div class="movie-carousel">
+            {% for day in date_films %}
+              {% if day.films %}
+                {% for film in day.films %}
+                  <article class="movie-card">
+                    <div class="movie-poster" style="background-image: url('{{ film.imgUrl }}')"></div>
+                    <div class="movie-info">
+                      <h3>{{ film.titolo }}</h3>
+                      <div class="movie-meta">
+                        <span class="genre">{{ film.lingua }}</span>
+                        <span class="duration">{{ film.durata }} min</span>
+                      </div>
+                      <div class="screening-info">
+                        <p>
+                          <i class="fas fa-chair"></i>
+                          Posti disponibili: {{ film.sala_numPosti }}
+                        </p>
+                        <p>
+                          <i class="fas fa-calendar"></i> {{ day.date }}
+                        </p>
+                      </div>
+                      <div class="movie-actions">
+                        <button
+                          class="btn-details btn btn-info"
+                          data-film-id="{{ film.codice }}"
+                          data-film-date="{{ day.date }}"
+                        >
+                          <i class="fas fa-info-circle"></i> Dettagli
+                        </button>
+                        <a
+                          href="{% url 'app_biglietti:prenota_biglietto' %}?film={{ film.codice }}&date={{ day.date|urlencode }}"
+                          class="btn-book btn btn-success"
+                        >
+                          <i class="fas fa-ticket-alt"></i> Prenota
+                        </a>
+                      </div>
+                    </div>
+                  </article>
+                {% endfor %}
+              {% else %}
+                <p class="text-muted">Nessun film in programmazione per il giorno {{ day.date }}.</p>
+              {% endif %}
+            {% endfor %}
+
+            <a href="{% url 'app_film:lista_film' %}" class="movie-card load-more-card">
+              <div class="more-content">
+                <i class="fas fa-plus-circle"></i>
+                <span>Altri film</span>
+              </div>
+            </a>
+          </div>
+          <button class="carousel-btn next" aria-label="Successivo">›</button>
+        </div>
+      </section>
+
+      <section class="promotions">
+        <h2><i class="fas fa-percentage"></i> Promozioni</h2>
+        <div class="promo-cards">
+          <div class="promo-card">
+            <i class="fas fa-child"></i>
+            <h3>Fedeltà</h3>
+            <p>Sconto del 10% se sei registrato al sito</p>
+          </div>
+          <div class="promo-card">
+            <i class="fas fa-user-friends"></i>
+            <h3>Gruppi</h3>
+            <p>Sconto del 20% se acquisti almeno 10 biglietti</p>
+          </div>
+          <div class="promo-card">
+            <i class="fas fa-glass-martini"></i>
+            <h3>Cibo e bevande</h3>
+            <p>Sconto del 35% se acquisti almeno un menù al bar</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="movieModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <button id="modalClose">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+    <div id="salaTooltip" class="sala-tooltip" style="display:none;"></div>
+  </div>
+
+  {% include 'nav_header_footer/footer.html' %}
+{% endblock %}
+
+{# ===================== JS FINO IN FONDO ===================== #}
+{% block extra_js %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+  <script src="{% static 'app_nav/nav.js' %}"></script>
+  <script src="{% static 'app_nav/footer.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ==================== GESTIONE DEI SUGGERIMENTI “Search Film” ====================
+      const filmInput = document.getElementById('film');
+      const filmIdHidden = document.getElementById('film-id');
+      const suggestionsBox = document.getElementById('film-suggestions');
+      const carousel = document.querySelector(".movie-carousel");
+      const prevBtn = document.querySelector(".carousel-btn.prev");
+      const nextBtn = document.querySelector(".carousel-btn.next");
+      const scrollAmt = 320;
+      let debounceTimeout = null;
+
+      prevBtn.addEventListener("click", () => {
+        carousel.scrollBy({ left: -scrollAmt, behavior: "smooth" });
+      });
+      
+      nextBtn.addEventListener("click", () => {
+          carousel.scrollBy({ left: scrollAmt, behavior: "smooth" });
+      });
+
+      filmInput.addEventListener('input', () => {
+        const term = filmInput.value.trim();
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => fetchSuggestions(term), 300);
+      });
+
+      document.addEventListener('click', e => {
+        if (!suggestionsBox.contains(e.target) && e.target !== filmInput) {
+          suggestionsBox.innerHTML = '';
+          suggestionsBox.style.display = 'none';
+        }
+      });
+
+      filmInput.addEventListener('focus', () => {
+      fetchSuggestions(filmInput.value.trim());
+    });
+
+    function fetchSuggestions(term) {
+      const url = new URL("{% url 'app_film:search_film' %}", window.location.origin);
+      url.searchParams.set('term', term);
+      fetch(url)
+        .then(resp => {
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          return resp.json();
+        })
+        .then(data => renderSuggestions(data))
+        .catch(err => {
+          console.error('Fetch error:', err);
+          suggestionsBox.innerHTML = '';
+          suggestionsBox.style.display = 'none';
+        });
+    }
+
+      function renderSuggestions(results) {
+        if (!results.length) {
+          suggestionsBox.innerHTML = '';
+          suggestionsBox.style.display = 'none';
+          return;
+        }
+
+        let html = '<ul class="suggestion-list">';
+        results.forEach(film => {
+          html += `
+            <li class="film-suggestion" data-id="${film.id}">
+              <img src="${film.immagine}" class="film-thumbnail" alt="${film.titolo}">
+              <span class="suggestion-title">${film.titolo}</span>
+            </li>
+          `;
+        });
+        html += '</ul>';
+
+        suggestionsBox.innerHTML = html;
+        suggestionsBox.style.display = 'block';
+
+        document.querySelectorAll('.film-suggestion').forEach(li => {
+          li.addEventListener('click', () => {
+            const id = li.getAttribute('data-id');
+            const title = li.querySelector('.suggestion-title').innerText;
+            filmInput.value = title;
+            filmIdHidden.value = id;
+            suggestionsBox.innerHTML = '';
+            suggestionsBox.style.display = 'none';
+          });
+        });
+      }
+
+      // ==================== GESTIONE DEL MODAL “Dettagli Film” ====================
+      document.querySelectorAll('.btn-details').forEach(btn => {
+        btn.addEventListener('click', event => {
+          event.preventDefault();
+          const filmId   = btn.getAttribute('data-film-id');
+          const filmDate = btn.getAttribute('data-film-date');
+          if (!filmId || !filmDate) return;
+
+          const url = "{% url 'app_film:movie_details' %}"
+                    + "?film="  + encodeURIComponent(filmId)
+                    + "&date="  + encodeURIComponent(filmDate);
+
+          fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'text/html' }
+          })
+          .then(response => {
+            if (!response.ok) throw new Error('HTTP error: ' + response.status);
+            return response.text();
+          })
+          .then(htmlFragment => {
+            document.getElementById('modalBody').innerHTML = htmlFragment;
+            document.body.classList.add('no-scroll');
+            document.getElementById('movieModal').style.display = 'flex';
+          })
+          .catch(error => {
+            console.error('Fetch error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Errore',
+              text: 'Errore nel recuperare i dettagli.'
+            });
+          });
+        });
+      });
+
+      document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('movieModal').style.display = 'none';
+        document.body.classList.remove('no-scroll');
+      });
+    });
+  </script>
+{% endblock %}

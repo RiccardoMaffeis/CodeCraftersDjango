@@ -1,0 +1,83 @@
+{# templates/app_film/film_schedule.html #}
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'app_film/film.css' %}" />
+  <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
+  <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+{% endblock %}
+
+{% block title %}
+  CodeCrafters - Programmazione Film
+{% endblock %}
+
+{% block content %}
+  {% include 'nav_header_footer/header.html' %}
+  {% include 'nav_header_footer/navbar.html' %}
+
+  <div class="right-content">
+    <section id="filtro" class="search-section">
+      <div class="container">
+        <form class="search-form" method="get" action="">
+          <div class="form-group">
+            <label for="start-date"><i class="far fa-calendar-alt"></i>Data iniziale:</label>
+            <input type="date" id="start_date" name="start_date" min="2021-01-01" max="2025-12-31" value="{{ request.GET.start_date|default:'' }}" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="end-date"><i class="far fa-calendar-alt"></i>Data finale:</label>
+            <input type="date" id="end_date" name="end_date" min="2021-01-01" max="2025-12-31" value="{{ request.GET.end_date|default:'' }}" class="form-control" />
+          </div>
+          <button type="submit" class="btn-search1 btn btn-primary"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+    </section>
+
+    <div class="container">
+      <div class="movies-grid">
+        {% for day in date_films %}
+          <div class="day-section">
+            <h3>{{ day.date }}</h3>
+            {% if day.films %}
+              <div class="carousel-wrapper">
+                <button class="carousel-btn prev" aria-label="Precedente">‹</button>
+                <div class="movie-carousel">
+                  {% for film in day.films %}
+                    <article class="movie-card">
+                      <a href="{% url 'app_biglietti:prenota_biglietto' %}?film={{ film.codice }}&date={{ day.date|urlencode }}" class="ticket-btn" title="Acquista biglietto"><img src="https://cdn-icons-png.flaticon.com/128/3702/3702886.png" alt="Ticket" class="ticket-icon" /></a>
+
+                      <div class="movie-poster" style="background-image: url('{{ film.imgUrl }}')"></div>
+                      <div class="movie-info">
+                        <h2>{{ film.titolo }}</h2>
+                      </div>
+                    </article>
+                  {% endfor %}
+                </div>
+                <button class="carousel-btn next" aria-label="Successivo">›</button>
+              </div>
+            {% else %}
+              <p class="text-muted">Nessun film in programmazione per il giorno {{ day.date }}.</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% include 'nav_header_footer/footer.html' %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+  <script src="{% static 'app_film/film.js' %}"></script>
+  <script src="{% static 'app_nav/nav.js' %}"></script>
+  <script src="{% static 'app_nav/footer.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
