@@ -80,7 +80,7 @@ TEMPLATES = [
 
 # Percorso dei file statici
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [ BASE_DIR / 'static', BASE_DIR / 'utils' ]
+STATICFILES_DIRS = [ BASE_DIR / 'static']
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
