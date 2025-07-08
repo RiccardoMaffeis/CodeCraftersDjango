@@ -5,6 +5,7 @@
 {% block extra_head %}
   <link rel="stylesheet" href="{% static 'app_biglietti/biglietti.css' %}" />
   <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
+  <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <link href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
@@ -34,7 +35,11 @@
       <div class="row row-top">
         <div class="movie-selection">
           <div class="movie-card selected-movie">
-            <img src="{% static 'immagini/' %}{{ poster_url|default:'default.jpg' }}" alt="Locandina {{ film_data.titolo|default:'' }}" />
+            {% if poster_url|slice:':4' == 'http' %}
+              <img src="{{ poster_url }}" alt="Locandina {{ film_data.titolo|default:'' }}" />
+            {% else %}
+              <img src="{% static 'immagini/' %}{{ poster_url|default:'default.jpg' }}" alt="Locandina {{ film_data.titolo|default:'' }}" />
+            {% endif %}
           </div>
         </div>
 
@@ -121,7 +126,7 @@
 
 {% block extra_js %}
   <script>
-    const userMail = {{ user_mail|default:"null"|json_script:"userMail" }};
+    const userMail = {{ user_mail|default:"null"|safe|json_script }}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
