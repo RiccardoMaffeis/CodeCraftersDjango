@@ -24,7 +24,9 @@ document.addEventListener('DOMContentLoaded', function () {
   function aggiornaOpzioni (filmId) {
     if (!filmId) return
 
-    fetch(`../utils/get_options_by_film.php?film_id=${filmId}`)
+    const baseUrl =
+      document.getElementById('config').dataset.getOptionsByFilmUrl
+    fetch(`${baseUrl}?film_id=${filmId}`)
       .then(res => res.json())
       .then(data => {
         const formattedDates = data.date.map(d => {
@@ -66,9 +68,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const [y, m, d] = sel.split('-')
     const formattedDate = `${d}/${m}/${y}`
 
-    fetch(
-      `../utils/get_options_by_film_and_date.php?film_id=${filmInput.dataset.id}&data=${formattedDate}`
-    )
+    const url =
+      document.getElementById('config').dataset.getOptionsByFilmAndDateUrl
+    fetch(`${url}?film_id=${filmIdInput.value}&data=${formattedDate}`)
       .then(res => res.json())
       .then(data => {
         orarioSelect.disabled = false
@@ -85,6 +87,8 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   orarioSelect.addEventListener('change', function () {
+    const film = document.getElementById('film-id')
+    console.log('Film ID:', film.value)
     const selDate = dataSelect.value
     const selTime = this.value
     if (!selDate || !selTime) {
@@ -94,9 +98,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const [y, m, d] = selDate.split('-')
     const formattedDate = `${d}/${m}/${y}`
 
-    fetch(
-      `../utils/get_options_by_film_and_date_and_time.php?film_id=${filmInput.dataset.id}&data=${formattedDate}&ora=${selTime}`
-    )
+    const url =
+      document.getElementById('config').dataset
+        .getOptionsByFilmAndDateAndTimeUrl
+    fetch(`${url}?film_id=${film.value}&data=${formattedDate}&ora=${selTime}`)
       .then(res => res.json())
       .then(data => {
         if (data.sale.length) {
@@ -174,10 +179,28 @@ document.addEventListener('DOMContentLoaded', function () {
       li.addEventListener('click', () => {
         const id = li.getAttribute('data-id')
         const title = li.querySelector('.suggestion-title').innerText
+
         filmInput.value = title
         filmIdInput.value = id
+
         suggestionsContainer.innerHTML = ''
         suggestionsContainer.style.display = 'none'
+
+        if (dataSelect._flatpickr) {
+          dataSelect._flatpickr.clear()
+          dataSelect._flatpickr.set('enable', [])
+        }
+        dataSelect.value = ''
+        orarioSelect.innerHTML = '<option value="">Seleziona un orario</option>'
+        salaSelect.innerHTML = ''
+        document.getElementById('sala-hidden').value = ''
+        dataSelect.disabled = true
+        orarioSelect.disabled = true
+        salaSelect.disabled = true
+        document.getElementById('salaTooltip').style.display = 'none'
+
+        aggiornaOpzioni(id)
+        updateSubmitState()
       })
     })
   }
@@ -185,27 +208,42 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.querySelector('.search-form')
   form.addEventListener('submit', function (e) {
     localStorage.setItem('bigliettiAttivo', 'true')
-    const raw = dataSelect.value
-    if (raw) {
-      const [year, month, day] = raw.split('-')
-      dataSelect.value = `${day}/${month}/${year}`
+
+    const selectedFilmId = filmIdInput.value
+    const selectedFilmName = filmInput.value
+    const selectedDateRaw = dataSelect.value
+    const selectedTime = orarioSelect.value
+    const salaValue = document.getElementById('sala-hidden').value
+
+    console.log('=== DATI SUBMIT ===')
+    console.log('Film ID:', selectedFilmId)
+    console.log('Film Name:', selectedFilmName)
+    console.log('Data raw:', selectedDateRaw)
+    console.log('Orario:', selectedTime)
+    console.log('Sala:', salaValue)
+
+    // Controllo validità
+    if (!selectedFilmId || !selectedDateRaw || !selectedTime || !salaValue) {
+      console.warn('Dati mancanti nel submit. Bloccato.')
+      e.preventDefault()
+      Swal.fire({
+        icon: 'warning',
+        title: 'Compila tutti i campi',
+        text: 'Assicurati di aver selezionato film, data, orario e sala.'
+      })
+      return false
     }
 
-    const selectedDate = raw
-    const orarioInput = document.querySelector(
-      'select[name="orario"], #orario, #orario-select'
-    )
-    const salaDiv = document.getElementById('sala')
-    const selectedTime = orarioInput ? orarioInput.value : null
-    const bigliettiLink = document.getElementById('biglietti-link')
-
+    // Controllo orario non passato (oggi)
+    const [y, m, d] = selectedDateRaw.split('-')
+    const todayStr = new Date().toISOString().split('T')[0]
     const now = new Date()
-    const todayStr = now.toISOString().split('T')[0]
     const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(
       now.getMinutes()
     ).padStart(2, '0')}`
 
-    if (selectedDate === todayStr && selectedTime && selectedTime < nowTime) {
+    const formattedDate = `${d}/${m}/${y}`
+    if (`${y}-${m}-${d}` === todayStr && selectedTime < nowTime) {
       Swal.fire({
         icon: 'error',
         title: 'Orario non valido',
@@ -217,13 +255,11 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       e.preventDefault()
       localStorage.removeItem('bigliettiAttivo')
-      dataSelect.value = ''
-      if (orarioInput) orarioInput.value = ''
-      if (salaDiv) salaDiv.innerHTML = ''
-      if (bigliettiLink) bigliettiLink.classList.add('disabled-link')
-      updateSubmitState()
       return false
     }
+
+    // Riformatto la data per l’invio nel form (es: 10/07/2025)
+    dataSelect.value = formattedDate
   })
 })
 

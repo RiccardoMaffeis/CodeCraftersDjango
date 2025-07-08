@@ -144,7 +144,7 @@
 
 {# ===================== JS FINO IN FONDO ===================== #}
 {% block extra_js %}
-  <div id="config" data-movie-details-url="{% url 'app_film:movie_details' %}" data-search-film-url="{% url 'app_film:search_film' %}"></div>
+  <div id="config" data-movie-details-url="{% url 'app_film:movie_details' %}" data-search-film-url="{% url 'app_film:search_film' %}" data-get-options-by-film-url="{% url 'app_film:get_options_by_film' %}" data-get-options-by-film-and-date-url="{% url 'app_film:get_options_by_film_and_date' %}" data-get-options-by-film-and-date-and-time-url="{% url 'app_film:get_options_by_film_and_date_and_time' %}"></div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

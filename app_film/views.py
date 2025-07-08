@@ -59,17 +59,15 @@ def film_schedule(request):
     return JsonResponse({"date_films": date_films})
 
 def lista_film(request):
-    # 1) Leggi i parametri GET “start-date” e “end-date” e falli swap se invertiti
     start_str = request.GET.get("start-date")
     end_str = request.GET.get("end-date")
-    date_format = "%Y-%m-%d"  # i <input type="date"> restituiscono YYYY-MM-DD
+    date_format = "%Y-%m-%d"
 
     if start_str and end_str:
         try:
             start_date = datetime.strptime(start_str, date_format).date()
             end_date = datetime.strptime(end_str, date_format).date()
         except ValueError:
-            # formato non valido: ricadi sul default
             start_date = end_date = None
 
         if start_date and end_date:
@@ -78,23 +76,19 @@ def lista_film(request):
     else:
         start_date = end_date = None
 
-    # 2) Se non ho date valide, prendo da lunedì a domenica di questa settimana
     today = datetime.now().date()
     if not start_date or not end_date:
         monday = today - timedelta(days=today.weekday())
         start_date = monday
         end_date = monday + timedelta(days=6)
 
-    # 3) Costruisco l'elenco delle date nel formato dd/mm/YYYY, saltando martedì(1) e mercoledì(2)
     dates = []
     ts = start_date
     while ts <= end_date:
-        # Python weekday(): Lun=0, Mar=1, Mer=2...
         if ts.weekday() not in (1, 2):
             dates.append(ts.strftime("%d/%m/%Y"))
         ts += timedelta(days=1)
 
-    # 4) Carico la mappa JSON delle locandine
     json_path = os.path.join(settings.BASE_DIR, "static", "utils", "film_images.json")
     try:
         with open(json_path, encoding="utf-8") as f:
@@ -102,13 +96,8 @@ def lista_film(request):
     except (FileNotFoundError, json.JSONDecodeError):
         img_data = {}
 
-    # 5) Per ogni giorno, prendo tutte le proiezioni e deduplichi per film
     date_films = []
     for date_str in dates:
-        # Se il tuo campo Proiezione.data è DateField, converti la stringa:
-        # data_obj = datetime.strptime(date_str, "%d/%m/%Y").date()
-        # qs = Proiezione.objects.filter(data=data_obj)
-        # Se invece è testuale, filtra su data=date_str
         qs = (
             Proiezione.objects.filter(data=date_str)
             .select_related("filmproiettato", "sala")
@@ -147,7 +136,6 @@ def movie_details(request):
     if not film_id or not date_str:
         return HttpResponseBadRequest("Parametri mancanti: 'film' e/o 'date'")
 
-    # Carica JSON locandine da static/utils/film_images.json
     json_path = os.path.join(settings.BASE_DIR, "static", "utils", "film_images.json")
     try:
         with open(json_path, "r", encoding="utf-8") as f:
@@ -204,13 +192,11 @@ def movie_details(request):
 
 def search_film(request):
     term = request.GET.get("term", "").strip()
-    # 1) Filtra i film
     if term:
         qs = Film.objects.filter(titolo__icontains=term)
     else:
         qs = Film.objects.all()
 
-    # 2) Carica JSON delle immagini
     img_path = os.path.join(settings.BASE_DIR, "static", "utils", "film_images.json")
     try:
         with open(img_path, "r", encoding="utf-8") as f:
@@ -218,7 +204,6 @@ def search_film(request):
     except (FileNotFoundError, json.JSONDecodeError):
         images = {}
 
-    # 3) Costruisci la lista di risultati
     results = []
     for film in qs:
         fid = str(film.codice)
@@ -226,9 +211,77 @@ def search_film(request):
             {
                 "id": film.codice,
                 "titolo": film.titolo,
-                # se non c'è, metti un placeholder qualsiasi
                 "immagine": images.get(fid, "https://example.com/images/default.jpg"),
             }
         )
 
     return JsonResponse(results, safe=False)
+
+def get_options_by_film(request):
+    film_id = request.GET.get('film_id')
+    if not film_id:
+        return JsonResponse({'error': 'Missing film_id'}, status=400)
+
+    sale_qs = Sala.objects.filter(proiezioni__filmproiettato=film_id).distinct().values('numero', 'tipo')
+
+    date_qs = Proiezione.objects.filter(filmproiettato=film_id).values_list('data', flat=True).distinct()
+    orari_qs = Proiezione.objects.filter(filmproiettato=film_id).values_list('ora', flat=True).distinct()
+
+    date = [{'data': d} for d in date_qs]
+
+    return JsonResponse({
+        'sale': list(sale_qs),
+        'date': date,
+        'orari': list(orari_qs)
+    })
+    
+def get_options_by_film_and_date(request):
+    film_id = request.GET.get('film_id')
+    data = request.GET.get('data')
+
+    if not film_id or not data:
+        return JsonResponse({'error': 'Parametri mancanti'}, status=400)
+
+    try:
+        sale_qs = Sala.objects.filter(
+            proiezioni__filmproiettato__codice=film_id,
+            proiezioni__data=data
+        ).distinct().values('numero', 'tipo')
+
+        orari_qs = Proiezione.objects.filter(
+            filmproiettato__codice=film_id,
+            data=data
+        ).values('ora')
+
+        return JsonResponse({
+            'sale': list(sale_qs),
+            'orari': list(orari_qs)
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+def get_options_by_film_and_date_and_time(request):
+    film_id = request.GET.get("film_id")
+    data = request.GET.get("data")
+    ora = request.GET.get("ora")
+
+    if not (film_id and data and ora):
+        return JsonResponse({"error": "Parametri mancanti"}, status=400)
+
+    proiezioni = Proiezione.objects.filter(
+        filmproiettato_id=film_id,
+        data=data,
+        ora__startswith=ora
+    ).select_related("sala")
+
+    sale = []
+    for p in proiezioni:
+        sala = p.sala
+        if sala:
+            sale.append({
+                "numero": sala.numero,
+                "tipo": sala.tipo,
+            })
+
+    return JsonResponse({"sale": sale})
