@@ -8,12 +8,11 @@ from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 from .models import Film, Proiezione, Sala
 
-
 def film_schedule(request):
     start_date_str = request.GET.get("start_date", "")
     end_date_str = request.GET.get("end_date", "")
     today = datetime.now().date()
-
+    print("CHIAMATA film_schedule:", start_date_str, "->", end_date_str)
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else today - timedelta(days=today.weekday())
     except ValueError:
