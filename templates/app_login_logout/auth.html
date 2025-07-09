@@ -17,7 +17,6 @@
 {% endblock %}
 
 {% block content %}
-  {# Se l’utente è già autenticato, la view lo reindirizzerà altrove; qui mostriamo sempre il markup #}
   <a href="{% url 'app_index:index' %}" class="back-arrow slide-in-left"><i class="fas fa-arrow-left"></i> Back</a>
 
   <div class="auth-container">
@@ -109,5 +108,9 @@
 {% endblock %}
 
 {% block extra_js %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
   <script src="{% static 'app_login_logout/login.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

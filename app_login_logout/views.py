@@ -11,8 +11,11 @@ from django.contrib.auth import (
     logout as django_logout,
 )
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from app_utente.models import Utente
 
 User = get_user_model()
 
@@ -129,3 +132,55 @@ def logout_view(request):
     if request.user.is_authenticated:
         django_logout(request)
     return redirect(reverse("app_index:index"))
+
+@csrf_exempt
+def auth_login(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Metodo non consentito'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        mail = data.get('mail', '').strip()
+        password = data.get('password', '')
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'success': False, 'message': 'Dati non validi'}, status=400)
+
+    try:
+        user = Utente.objects.get(mail=mail)
+    except Utente.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Email o password errati'})
+
+    if check_password(password, user.password):
+        request.session['user_id'] = user.id
+        request.session['nome'] = user.nome
+        request.session['mail'] = mail
+        return JsonResponse({'success': True, 'nome': user.nome})
+    else:
+        return JsonResponse({'success': False, 'message': 'Email o password errati'})
+    
+@csrf_exempt
+def auth_register(request):
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Metodo non consentito"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        nome = data.get('nome', '').strip()
+        mail = data.get('mail', '').strip()
+        password = data.get('password', '')
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({"success": False, "message": "Dati non validi"}, status=400)
+
+    if not nome or not mail or not password:
+        return JsonResponse({"success": False, "message": "Tutti i campi sono obbligatori"}, status=400)
+
+    if Utente.objects.filter(mail=mail).exists():
+        return JsonResponse({"success": False, "message": "Email già registrata"}, status=409)
+
+    hashed_password = make_password(password)
+
+    try:
+        Utente.objects.create(nome=nome, mail=mail, password=hashed_password)
+        return JsonResponse({"success": True})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": "Errore durante la registrazione"}, status=500)
