@@ -8,7 +8,7 @@ app_name = 'app_utente'
 urlpatterns = [
     path('profile/', views.profile, name='profile'),  
     path(
-        'elimina/<int:num_proiezione>/<int:num_fila>/<int:num_posto>/',
+        'utente/elimina/<str:num_proiezione>/<str:num_fila>/<int:num_posto>/',
         views.elimina_biglietto,
         name='elimina_biglietto'
     ),

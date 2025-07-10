@@ -1,46 +1,38 @@
 {# templates/app_utente/profile.html #}
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
-{% load humanize %}  {# per il filtro floatformat #}
 
 {% block extra_head %}
-  {# CSS dell’app utente e stile di navigazione #}
-  <link rel="stylesheet" href="{% static 'app_utente/utente.css' %}">
-  <link rel="stylesheet" href="{% static 'app_nav/style.css' %}">
-  {# Font Awesome e SweetAlert2 #}
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  >
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
-  >
+  <link rel="stylesheet" href="{% static 'app_utente/utente.css' %}" />
+  <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
+  <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
 {% endblock %}
 
-{% block title %}CodeCrafters – Il tuo Profilo{% endblock %}
+{% block title %}
+  CodeCrafters – Il tuo Profilo
+{% endblock %}
 
 {% block content %}
-  {# Navbar comune #}
+  {% include 'nav_header_footer/header.html' %}
   {% include 'nav_header_footer/navbar.html' %}
 
   <main class="right-content container mt-4">
-    {# Se l’utente non è autenticato, viene già gestito in view #}
-
     <div class="user-card mb-5">
       <h1>Informazioni profilo</h1>
       <div class="avatar mb-3">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png?20200919003010"
-          alt="Avatar Utente"
-          class="rounded-circle"
-          width="120"
-          height="120"
-        >
+        <img src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png?20200919003010" alt="Avatar Utente" class="rounded-circle" width="120" height="120" />
       </div>
       <div class="user-info">
-        <p><strong>Nome:</strong> {{ request.user.nome }}</p>
-        <p><strong>Email:</strong> {{ request.user.email }}</p>
+        <p>
+          <strong>Nome:</strong> {{ nome_utente }}
+        </p>
+        <p>
+          <strong>Email:</strong> {{ mail_utente }}
+        </p>
       </div>
     </div>
 
@@ -62,29 +54,19 @@
             </tr>
           </thead>
           <tbody>
-            {% for b in tickets %}
+            {% for t in tickets %}
               <tr>
-                <td>{{ b.proiezione.numProiezione }}</td>
-                <td>{{ b.proiezione.sala.numero }}</td>
-                <td>{{ b.numFila }}</td>
-                <td>{{ b.numPosto }}</td>
-                <td>{{ b.dataVendita|date:"j F Y" }}</td>
-                <td>€{{ b.prezzo|floatformat:2 }}</td>
-                <td>{{ b.email }}</td>
+                <td>{{ t.proiezione.numproiezione }}</td>
+                <td>{{ t.sala.numero }}</td>
+                <td>{{ t.biglietto.numfila }}</td>
+                <td>{{ t.biglietto.numposto }}</td>
+                <td>{{ t.biglietto.datavendita|date:'j F Y' }}</td>
+                <td>€{{ t.biglietto.prezzo|floatformat:2 }}</td>
+                <td>{{ t.biglietto.email }}</td>
                 <td>
-                  <form
-                    method="post"
-                    action="{% url 'app_utente:elimina_biglietto' b.proiezione.numProiezione b.numFila b.numPosto %}"
-                    class="delete-form"
-                  >
+                  <form method="post" action="{% url 'app_utente:elimina_biglietto' t.proiezione.numproiezione t.biglietto.numfila t.biglietto.numposto %}" class="delete-form">
                     {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="btn btn-outline-danger btn-sm"
-                      title="Elimina biglietto"
-                    >
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
                   </form>
                 </td>
               </tr>
@@ -97,14 +79,28 @@
     </div>
   </main>
 
-  {# Footer comune #}
   {% include 'nav_header_footer/footer.html' %}
-
 {% endblock %}
 
+{% if deleted_ticket %}
+  <script>
+    Swal.fire({
+      icon: 'success',
+      title: 'Biglietto eliminato',
+      toast: true,
+      position: 'top-end',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  </script>
+{% endif %}
+
 {% block extra_js %}
-  {# SweetAlert2 e JS di navigazione #}
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
   <script src="{% static 'app_nav/nav.js' %}"></script>
   <script src="{% static 'app_nav/footer.js' %}"></script>
+  <script src="{% static 'app_utente/utente.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

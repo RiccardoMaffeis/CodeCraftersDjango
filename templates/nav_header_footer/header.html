@@ -4,9 +4,9 @@
   <div class="header-content">
     <h1 class="logo">Code<span>Crafters</span></h1>
     <div class="user-actions">
-      {% if user.is_authenticated %}
+      {% if request.session.nome %}
         <div class="user-area">
-          <span class="user-name">{{ user.get_username }}</span>
+          <span class="user-name">{{ request.session.nome }}</span>
           <form method="post" action="{% url 'app_login_logout:logout' %}">
             {% csrf_token %}
             <button type="submit" class="logout-btn">

@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!email) return
 
     try {
-      const res = await fetch('../utils/recover_password.php', {
+      const res = await fetch('/login/recover_password/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() })

@@ -1,7 +1,7 @@
 # app_login_logout/views.py
 
 import json
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -16,26 +16,21 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from app_utente.models import Utente
+from django.utils import timezone
+from django.http import JsonResponse
+from django.core.mail import send_mail
+import secrets
+from datetime import timedelta
 
 User = get_user_model()
 
-
 def auth_view(request):
-    """
-    Mostra la pagina di login/signup (auth.html).
-    Se l’utente è già autenticato, lo reindirizza alla home (app_index:index).
-    """
     if request.user.is_authenticated:
         return redirect(reverse("app_index:index"))
     return render(request, "app_login_logout/auth.html")
 
 
 def login_view(request):
-    """
-    Gestisce il form HTML di login (POST da auth.html con campi 'email' e 'password').
-    Se le credenziali sono corrette, esegue il login e reindirizza alla home.
-    Altrimenti, imposta un messaggio di errore e ritorna a auth_view.
-    """
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "")
@@ -45,19 +40,11 @@ def login_view(request):
             return redirect(reverse("app_index:index"))
         else:
             messages.error(request, "Email o password non validi.")
-    # In ogni altro caso (GET o credenziali sbagliate), torno a auth_view
     return redirect(reverse("app_login_logout:auth"))
 
 
 @csrf_exempt
 def api_login(request):
-    """
-    Equivalente di auth_login.php:
-    - Si aspetta un POST con body JSON: {"mail": "<email>", "password": "<pwd>"}.
-    - Controlla le credenziali tramite authenticate().
-    - Se corrette, chiama django_login() e restituisce JSON {"success": true, "nome": "<NomeUtente>"}.
-    - Altrimenti restituisce JSON {"success": false, "message": "..."}.
-    """
     if request.method != "POST":
         return HttpResponseBadRequest(
             json.dumps({"success": False, "message": "Solo POST consentito."}),
@@ -83,7 +70,6 @@ def api_login(request):
     user = authenticate(request, username=email, password=password)
     if user is not None:
         django_login(request, user)
-        # Se il tuo modello User ha un campo “nome”, usalo; altrimenti get_username()
         nome_utente = getattr(user, "first_name", user.get_username())
         return JsonResponse({"success": True, "nome": nome_utente})
     else:
@@ -91,47 +77,34 @@ def api_login(request):
 
 
 def signup_view(request):
-    """
-    Gestisce la registrazione (POST da auth.html con campi 'name', 'email', 'password', 'confirm_password').
-    Se tutti i controlli passano, crea l’utente e lo logga. Altrimenti reindirizza con messaggi di errore.
-    """
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "")
         confirm_password = request.POST.get("confirm_password", "")
 
-        # Controllo password
         if password != confirm_password:
             messages.error(request, "Le password non corrispondono.")
             return redirect(reverse("app_login_logout:auth") + "#signup")
 
-        # Controllo esistenza utente con quella email
         if User.objects.filter(username=email).exists():
             messages.error(request, "Email già registrata.")
             return redirect(reverse("app_login_logout:auth") + "#signup")
 
-        # Creo utente
         user = User.objects.create_user(
             username=email,
             email=email,
             password=password,
-            first_name=name,  # Se usi un campo “nome” personalizzato, modificalo qui
+            first_name=name,
         )
         django_login(request, user)
         return redirect(reverse("app_index:index"))
 
-    # Se non è POST, torno a auth
     return redirect(reverse("app_login_logout:auth"))
 
-
 def logout_view(request):
-    """
-    Esegue il logout e reindirizza alla home.
-    """
-    if request.user.is_authenticated:
-        django_logout(request)
-    return redirect(reverse("app_index:index"))
+    request.session.flush()
+    return redirect('app_index:index')
 
 @csrf_exempt
 def auth_login(request):
@@ -184,3 +157,89 @@ def auth_register(request):
         return JsonResponse({"success": True})
     except Exception as e:
         return JsonResponse({"success": False, "message": "Errore durante la registrazione"}, status=500)
+    
+@csrf_exempt
+def recover_password(request):
+    if request.method != 'POST':
+        return JsonResponse({'icon': 'error', 'title': 'Errore', 'message': 'Metodo non consentito'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'icon': 'error', 'title': 'Errore', 'message': 'JSON non valido'}, status=400)
+
+    email = data.get('email', '').strip()
+    if not email:
+        return JsonResponse({'icon': 'error', 'title': 'Errore', 'message': 'Email mancante'}, status=400)
+
+    try:
+        utente = Utente.objects.get(mail=email)
+    except Utente.DoesNotExist:
+        return JsonResponse({'icon': 'error', 'title': 'Utente non trovato', 'message': 'Nessun account è registrato con questa email'}, status=404)
+
+    token = secrets.token_hex(32)
+    expire = timezone.now() + timedelta(hours=1)
+
+    utente.reset_token = token
+    utente.reset_expire = expire
+    utente.save()
+
+    # ✅ Link Django invece di PHP
+    reset_link = request.build_absolute_uri(reverse('app_login_logout:reset_password') + f"?token={token}")
+
+    subject = "Recupero Password - CodeCrafter"
+    message = f"""Ciao {utente.nome},
+
+Abbiamo ricevuto una richiesta per reimpostare la tua password.
+
+Per procedere clicca sul link seguente (valido per 1 ora):
+{reset_link}
+
+Se non hai richiesto nulla, puoi ignorare questa email."""
+
+    success = send_mail(
+        subject=subject,
+        message=message,
+        from_email="no-reply@cinecraft.it",
+        recipient_list=[email],
+        fail_silently=False
+    )
+
+    if success:
+        return JsonResponse({
+            'icon': 'success',
+            'title': 'Email inviata',
+            'message': 'Controlla la tua casella di posta per reimpostare la password'
+        })
+    else:
+        return JsonResponse({
+            'icon': 'error',
+            'title': 'Errore invio',
+            'message': "Errore durante l'invio dell'email"
+        }, status=500)
+        
+def reset_password_view(request, token):
+    try:
+        user = Utente.objects.get(reset_token=token, reset_expire__gt=timezone.now())
+    except Utente.DoesNotExist:
+        return HttpResponse("Token non valido o scaduto", status=400)
+
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        confirm = request.POST.get('confirm')
+
+        if not password or len(password) < 6:
+            messages.error(request, "La password deve avere almeno 6 caratteri.")
+        elif password != confirm:
+            messages.error(request, "Le password non coincidono.")
+        else:
+            user.password = make_password(password)
+            user.reset_token = None
+            user.reset_expire = None
+            user.save()
+            messages.success(request, "Password aggiornata con successo. Ora puoi effettuare il login.")
+            return redirect('app_login_logout:login')
+
+    return render(request, 'app_login_logout/reset_password.html', {
+        'token': token
+    })
