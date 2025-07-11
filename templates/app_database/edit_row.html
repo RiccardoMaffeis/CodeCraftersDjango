@@ -1,0 +1,103 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>CodeCrafters - Modifica {{ table }}</title>
+    <link rel="stylesheet" href="{% static 'app_database/edit_row.css' %}">
+    <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
+</head>
+<body>
+<div class="edit-container">
+    <h2>Modifica {{ table }}</h2>
+
+    {% if msg %}
+        <div class="error">{{ msg }}</div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {% for col in cols %}
+            {% with value=row|get_item:col %}
+                <div class="form-group">
+                    <label for="{{ col }}">
+                        {{ col|capfirst|replace:"_: " }}{% if col == pk %} (PK){% endif %}:
+                    </label>
+
+                    {% if col == pk or table == 'Biglietto' and col in readonly_biglietto or table == 'Sala' and col in readonly_sala %}
+                        <input type="hidden" name="{{ col }}" value="{{ value }}">
+                        <input type="text" id="{{ col }}" value="{{ value }}" readonly disabled>
+
+                    {% elif table == 'Sala' and col == 'dim' %}
+                        <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="0" step="1" required>
+
+                    {% elif table == 'Sala' and col == 'tipo' %}
+                        <select id="{{ col }}" name="{{ col }}" required>
+                            <option value="">-- Seleziona --</option>
+                            <option value="tradizionale" {% if value == 'tradizionale' %}selected{% endif %}>Tradizionale</option>
+                            <option value="3-D" {% if value == '3-D' %}selected{% endif %}>3-D</option>
+                        </select>
+
+                    {% elif table == 'Proiezione' and col == 'sala' %}
+                        <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="1" max="15" required>
+
+                    {% elif table == 'Proiezione' and col == 'filmProiettato' %}
+                        <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="1" max="100" step="1" required>
+
+                    {% elif table == 'Proiezione' and col == 'data' %}
+                        <input type="date" id="{{ col }}" name="{{ col }}" value="{{ value|date:'Y-m-d' }}" required>
+
+                    {% elif table == 'Proiezione' and col == 'ora' %}
+                        <select id="ora" name="ora" required>
+                            <option value="">-- Seleziona l'orario --</option>
+                            {% for o in "16:00:00,18:00:00,20:00:00,22:00:00"|split:"," %}
+                                <option value="{{ o }}" {% if value == o %}selected{% endif %}>{{ o|slice:":5" }}</option>
+                            {% endfor %}
+                        </select>
+
+                    {% elif table == 'Biglietto' and col == 'prezzo' %}
+                        <select id="prezzo" name="prezzo" required>
+                            <option value="">-- Seleziona prezzo --</option>
+                            <option value="12" {% if value == '12' %}selected{% endif %}>€12</option>
+                            <option value="18" {% if value == '18' %}selected{% endif %}>€18</option>
+                        </select>
+
+                    {% elif col in numeric_fields %}
+                        <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="0" step="1" required>
+
+                    {% elif col == 'dataVendita' %}
+                        <input type="date" id="{{ col }}" name="{{ col }}" value="{{ value|date:'Y-m-d' }}" required>
+
+                    {% else %}
+                        <input type="text" id="{{ col }}" name="{{ col }}" value="{{ value }}" required>
+                    {% endif %}
+                </div>
+            {% endwith %}
+        {% endfor %}
+
+        {% if table == 'Film' %}
+            <div class="form-group">
+                <label for="image_link">Link immagine:</label>
+                <input type="url" id="image_link" name="image_link" value="{{ film_image }}" required>
+            </div>
+            {% if film_image %}
+                <div class="form-group">
+                    <img src="{{ film_image }}" alt="Copertina film {{ row.codice }}"
+                         style="max-width:100%;height:auto;border:1px solid #ccc;border-radius:4px;">
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="form-actions">
+            {% csrf_token %}
+            <button type="submit" class="btn-save">Salva modifiche</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='{% url 'app_nav:dashboard' %}'">
+                Annulla
+            </button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

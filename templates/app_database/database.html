@@ -1,27 +1,21 @@
-{# templates/app_database/dashboard.html #}
+{# templates/app_database/database.html #}
 {% extends "base.html" %}
 {% load static %}
 
 {% block extra_head %}
-  {# CSS locali dell’app database #}
   <link rel="stylesheet" href="{% static 'app_database/database.css' %}">
-  {# CSS generali di navigazione #}
   <link rel="stylesheet" href="{% static 'app_nav/style.css' %}">
-  {# Font Awesome e SweetAlert2 #}
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  >
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
-  >
+  <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
 {% endblock %}
 
 {% block title %}CodeCrafters – Visualizza Database{% endblock %}
 
 {% block content %}
-  {# Navbar comune #}
+  {% include 'nav_header_footer/header.html' %}
   {% include 'nav_header_footer/navbar.html' %}
 
   <div class="right-content">
@@ -38,6 +32,7 @@
     </section>
 
     <div class="content">
+
       {% if is_admin %}
         <div class="db-table-container" id="tab-Biglietto" style="display:none;">
           <h2 class="db-title">Tabella Biglietto</h2>
@@ -63,13 +58,15 @@
     </div>
   </div>
 
-  {# Footer comune #}
   {% include 'nav_header_footer/footer.html' %}
 {% endblock %}
 
 {% block extra_js %}
-  {# JS locali dell’app database e di navigazione #}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
   <script defer src="{% static 'app_database/database.js' %}"></script>
   <script defer src="{% static 'app_nav/nav.js' %}"></script>
   <script defer src="{% static 'app_nav/footer.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

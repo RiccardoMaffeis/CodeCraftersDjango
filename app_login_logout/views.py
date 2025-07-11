@@ -185,7 +185,7 @@ def recover_password(request):
     utente.save()
 
     # ✅ Link Django invece di PHP
-    reset_link = request.build_absolute_uri(reverse('app_login_logout:reset_password') + f"?token={token}")
+    reset_link = request.build_absolute_uri(reverse('app_login_logout:reset_password', args=[token]))
 
     subject = "Recupero Password - CodeCrafter"
     message = f"""Ciao {utente.nome},

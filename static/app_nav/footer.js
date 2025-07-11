@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    fetch('../utils/subscribe_newsletter.php', {
+    fetch('/utils/subscribe_newsletter/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: address })

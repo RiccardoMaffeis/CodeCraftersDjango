@@ -25,4 +25,5 @@ urlpatterns = [
     path('', include('app_index.urls')),
     path('login/', include('app_login_logout.urls')),
     path('utente/', include('app_utente.urls')),
+    path('utils/', include('app_nav.urls', namespace='app_nav')),
 ]

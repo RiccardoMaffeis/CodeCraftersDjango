@@ -14,10 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadTable(tableName, page = 1) {
         currentTable = tableName;
         currentPage = page;
-        overlay.style.display = 'flex';
 
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', `../utils/get_table.php?table=${encodeURIComponent(tableName)}&page=${page}`, true);
+        xhr.open('GET', `/database/get_table/?table=${encodeURIComponent(tableName)}&page=${page}`, true);
 
         xhr.onload = () => {
             const container = document.getElementById('tab-' + tableName);
@@ -28,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                <p class="db-nodata">Errore ${xhr.status}</p>`;
             }
             showTab(tableName);
-            overlay.style.display = 'none';
 
             container.querySelectorAll('.page-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -63,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cancelButtonText: 'Annulla'
                     }).then(result => {
                         if (result.isConfirmed) {
-                            fetch(`../utils/delete_row.php`, {
+                            fetch(`/database/delete_row/`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                                 body: `table=${table}&id=${id}`
@@ -86,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.addEventListener('click', () => {
                     const table = encodeURIComponent(btn.dataset.table);
                     const id = encodeURIComponent(btn.dataset.id);
-                    window.location.href = `../utils/edit_row.php?table=${table}&id=${id}`;
+                    window.location.href = `/database/edit_row/?table=${table}&id=${id}`;
                 });
             });
         };

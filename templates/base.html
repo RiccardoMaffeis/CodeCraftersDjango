@@ -12,4 +12,7 @@
   {% block content %}{% endblock %}
   {% block extra_js %}{% endblock %}
 </body>
+<script>
+  window.userMail = "{{ request.session.mail|default:'' }}";
+</script>
 </html>
