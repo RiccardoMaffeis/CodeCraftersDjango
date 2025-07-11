@@ -2,12 +2,8 @@
 
 import datetime
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.urls import reverse
 
 from app_film.models import Proiezione
-from .models import Utente
 from app_biglietti.models import Biglietto
 
 def profile(request):
@@ -17,20 +13,29 @@ def profile(request):
     mail_utente = request.session['mail']
     nome_utente = request.session.get('nome', '')
 
-    tickets_qs = (
+    tickets_raw = (
         Biglietto.objects
         .filter(email=mail_utente)
         .order_by('-datavendita')
     )
 
-    # Recupera e rimuovi il flag dalla sessione
+    enriched_tickets = []
+    for b in tickets_raw:
+        proiezione = Proiezione.objects.filter(numproiezione=b.numproiezione).first()
+        sala = proiezione.sala if proiezione and proiezione.sala else None
+        enriched_tickets.append({
+            'biglietto': b,
+            'proiezione': proiezione,
+            'sala': sala
+        })
+
     deleted_flag = request.session.pop('deleted_ticket', False)
 
     context = {
-        'tickets': tickets_qs,
+        'tickets': enriched_tickets,
         'nome_utente': nome_utente,
         'mail_utente': mail_utente,
-        'deleted_ticket': deleted_flag,  # nuovo
+        'deleted_ticket': deleted_flag,
     }
     return render(request, 'app_utente/utente.html', context)
 

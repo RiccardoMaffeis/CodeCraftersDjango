@@ -20,7 +20,7 @@
   {% include 'nav_header_footer/header.html' %}
   {% include 'nav_header_footer/navbar.html' %}
 
-  <main class="right-content container mt-4">
+  <main class="right-content">
     <div class="user-card mb-5">
       <h1>Informazioni profilo</h1>
       <div class="avatar mb-3">
@@ -66,7 +66,7 @@
                 <td>
                   <form method="post" action="{% url 'app_utente:elimina_biglietto' t.proiezione.numproiezione t.biglietto.numfila t.biglietto.numposto %}" class="delete-form">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm btn-icon" title="Elimina biglietto"><img src="https://cdn-icons-png.flaticon.com/128/3976/3976961.png" alt="Elimina" width="20" height="20" /></button>
                   </form>
                 </td>
               </tr>
@@ -84,14 +84,16 @@
 
 {% if deleted_ticket %}
   <script>
-    Swal.fire({
-      icon: 'success',
-      title: 'Biglietto eliminato',
-      toast: true,
-      position: 'top-end',
-      timer: 3000,
-      showConfirmButton: false
-    });
+    window.addEventListener('DOMContentLoaded', () => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Biglietto eliminato',
+        toast: true,
+        position: 'top-end',
+        timer: 3000,
+        showConfirmButton: false
+      })
+    })
   </script>
 {% endif %}
 
