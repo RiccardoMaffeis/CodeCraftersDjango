@@ -100,19 +100,14 @@ WSGI_APPLICATION = 'CodeCraftersDjango.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE':   'django.db.backends.mysql',
-        'NAME':     'codecrafters_local',   # nome del database locale
-        'USER':     'devuser',              # l’utente MySQL che hai creato
-        'PASSWORD': 'Rikuzz_03',           # la password di devuser
-        'HOST':     'localhost',
-        'PORT':     '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'codecrafters_db',       # deve corrispondere a quello creato/importato
+        'USER': 'postgres',              # utente PostgreSQL
+        'PASSWORD': 'postgres',          # password dell’utente
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 
 
 # Password validation

@@ -1,13 +1,12 @@
 import datetime
 import json
 import os
+import math
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from django.db import connection
 from django.shortcuts import redirect, render
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
-import math
-
 from CodeCraftersDjango import settings
 
 def get_table_data(request):
@@ -40,11 +39,11 @@ def get_table_data(request):
     }
 
     with connection.cursor() as cursor:
-        cursor.execute(f'SELECT COUNT(*) FROM `{table}`')
+        cursor.execute(f'SELECT COUNT(*) FROM "{table}"')
         total_rows = cursor.fetchone()[0]
         total_pages = max(1, math.ceil(total_rows / per_page))
 
-        cursor.execute(f'SELECT * FROM `{table}` LIMIT %s OFFSET %s', [per_page, offset])
+        cursor.execute(f'SELECT * FROM "{table}" LIMIT %s OFFSET %s', [per_page, offset])
         rows = cursor.fetchall()
 
         html = f"<h2 class='db-title'>Tabella {table}</h2>"
@@ -101,6 +100,7 @@ def get_table_data(request):
 
     return HttpResponse(html)
 
+
 @csrf_exempt
 def delete_row(request):
     mail = request.session.get('mail', '')
@@ -117,13 +117,14 @@ def delete_row(request):
     try:
         with connection.cursor() as cursor:
             if table == 'Utente':
-                cursor.execute("DELETE FROM Utente WHERE id = %s", [row_id])
+                cursor.execute('DELETE FROM "Utente" WHERE "id" = %s', [row_id])
             elif table == 'Biglietto':
-                cursor.execute("DELETE FROM Biglietto WHERE id = %s", [row_id])
+                cursor.execute('DELETE FROM "Biglietto" WHERE "id" = %s', [row_id])
         return JsonResponse({'success': True, 'message': f'{table} eliminato con successo'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'Errore durante eliminazione'})
-    
+
+
 def edit_row_view(request):
     numeric_fields = ['anno', 'durata', 'numPosti']
     mail = request.session.get('mail', '')
@@ -152,7 +153,8 @@ def edit_row_view(request):
     cols = model['cols']
 
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT {', '.join(cols)} FROM `{table}` WHERE `{pk}` = %s", [pk_value])
+        col_string = ', '.join([f'"{col}"' for col in cols])
+        cursor.execute(f'SELECT {col_string} FROM "{table}" WHERE "{pk}" = %s', [pk_value])
         row = cursor.fetchone()
         if not row:
             raise Http404("Record non trovato")
@@ -170,18 +172,18 @@ def edit_row_view(request):
                     pass
             values.append(raw)
 
-        set_fields = ", ".join([f"{col} = %s" for col in cols])
+        set_fields = ", ".join([f'"{col}" = %s' for col in cols])
         values.append(pk_value)
 
         with connection.cursor() as cursor:
             try:
-                cursor.execute(f"UPDATE `{table}` SET {set_fields} WHERE `{pk}` = %s", values)
+                cursor.execute(f'UPDATE "{table}" SET {set_fields} WHERE "{pk}" = %s', values)
             except Exception as e:
                 msg = f"Errore durante l'aggiornamento: {str(e)}"
             else:
                 if table == 'Film' and 'image_link' in request.POST:
                     image_link = request.POST['image_link'].strip()
-                    img_file = os.path.join(settings.BASE_DIR, 'app_nav', 'static', 'film_images.json')
+                    img_file = os.path.join(settings.BASE_DIR, 'static', 'utils', 'film_images.json')
                     try:
                         with open(img_file, 'r', encoding='utf-8') as f:
                             film_images = json.load(f)
@@ -203,17 +205,18 @@ def edit_row_view(request):
             film_image = ''
 
     return render(request, 'app_database/edit_row.html', {
-    'table': table,
-    'pk': pk,
-    'row': row_data,
-    'cols': cols,
-    'msg': msg,
-    'film_image': film_image,
-    'readonly_biglietto': readonly_biglietto,
-    'readonly_sala': readonly_sala,
-    'numeric_fields': numeric_fields,
-})
-    
+        'table': table,
+        'pk': pk,
+        'row': row_data,
+        'cols': cols,
+        'msg': msg,
+        'film_image': film_image,
+        'readonly_biglietto': readonly_biglietto,
+        'readonly_sala': readonly_sala,
+        'numeric_fields': numeric_fields,
+    })
+
+
 def database_dashboard(request):
     mail = request.session.get('mail', '')
     is_admin = (mail == 'admin@gmail.com')

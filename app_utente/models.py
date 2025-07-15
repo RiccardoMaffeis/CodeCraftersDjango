@@ -9,5 +9,5 @@ class Utente(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'utente'
+        db_table = 'Utente'
 

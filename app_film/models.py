@@ -16,7 +16,7 @@ class Film(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'film'
+        db_table = 'Film'
         
 class Sala(models.Model):
     numero = models.IntegerField(primary_key=True)
@@ -28,7 +28,7 @@ class Sala(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'sala'
+        db_table = 'Sala'
 
 class Proiezione(models.Model):
     numproiezione = models.CharField(db_column='numProiezione', primary_key=True, max_length=17)  # Field name made lowercase.
@@ -53,5 +53,5 @@ class Proiezione(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'proiezione'
+        db_table = 'Proiezione'
 

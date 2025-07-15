@@ -18,5 +18,5 @@ class Biglietto(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'biglietto'
+        db_table = 'Biglietto'
 
