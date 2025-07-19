@@ -5,6 +5,7 @@
 
 {# ===================== HEAD DEL TEMPLATE ===================== #}
 {% block extra_head %}
+  {# Inclusione CSS principali e librerie esterne #}
   <link rel="stylesheet" href="{% static 'app_index/index.css' %}" />
   <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
   <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
@@ -21,14 +22,17 @@
 
 {# ===================== CONTENUTO PRINCIPALE ===================== #}
 {% block content %}
-  {# Navbar e sidebar #}
+  {# Inclusione dell'header e della navbar condivisi #}
   {% include 'nav_header_footer/header.html' %}
   {% include 'nav_header_footer/navbar.html' %}
 
   <div class="right-content">
+    {# ======= Sezione ricerca film con filtro ======= #}
     <section id="filtro" class="search-section">
       <div class="container">
         <form class="search-form" action="{% url 'app_biglietti:prenota_biglietto' %}" method="get">
+          
+          {# Campo per digitare il nome del film con suggerimenti (autocomplete) #}
           <div class="form-group" style="position: relative;">
             <label for="film"><i class="fas fa-film"></i> Film:</label>
             <input type="text" id="film" name="film_name" placeholder="Cerca un film..." autocomplete="off" class="form-control" />
@@ -36,11 +40,13 @@
             <div id="film-suggestions" class="film-suggestions"></div>
           </div>
 
+          {# Campo data con Flatpickr #}
           <div class="form-group">
             <label for="data"><i class="far fa-calendar-alt"></i> Data:</label>
             <input type="text" id="data" name="date" placeholder="Seleziona una data" readonly class="form-control" />
           </div>
 
+          {# Orari disponibili, popolati dinamicamente via JS #}
           <div class="form-group">
             <label for="orario"><i class="far fa-clock"></i> Orario:</label>
             <select id="orario" name="orario" class="form-control">
@@ -48,27 +54,33 @@
             </select>
           </div>
 
+          {# Sala associata, caricata dinamicamente (in sola lettura) #}
           <div class="form-group">
             <label for="sala"><i class="fas fa-theater-masks"></i> Sala:</label>
             <div id="sala" class="sala"></div>
             <input type="hidden" id="sala-hidden" name="sala" />
           </div>
 
+          {# Pulsante invio form di ricerca #}
           <button type="submit" class="btn-search btn btn-primary"><i class="fas fa-search"></i></button>
         </form>
       </div>
     </section>
 
     <main class="container">
+      {# ======= Sezione proiezioni consigliate in carousel ======= #}
       <section class="now-showing">
         <h2><i class="fas fa-star"></i> Proiezioni consigliate</h2>
         <div class="carousel-wrapper">
           <button class="carousel-btn prev" aria-label="Precedente">‹</button>
+
           <div class="movie-carousel">
+            {# Ciclo su ciascun giorno con film disponibili #}
             {% for day in date_films %}
               {% if day.films %}
                 {% for film in day.films %}
                   <article class="movie-card">
+                    {# Locandina del film come sfondo #}
                     <div class="movie-poster" style="background-image: url('{{ film.imgUrl }}')"></div>
                     <div class="movie-info">
                       <h3>{{ film.titolo }}</h3>
@@ -86,17 +98,22 @@
                         </p>
                       </div>
                       <div class="movie-actions">
+                        {# Bottone per mostrare dettagli modale del film #}
                         <button class="btn-details btn btn-info" data-film-id="{{ film.codice }}" data-film-date="{{ day.date }}"><i class="fas fa-info-circle"></i> Dettagli</button>
+                        
+                        {# Link per prenotare il biglietto #}
                         <a href="{% url 'app_biglietti:prenota_biglietto' %}?film={{ film.codice }}&date={{ day.date|urlencode }}" class="btn-book btn btn-success"><i class="fas fa-ticket-alt"></i> Prenota</a>
                       </div>
                     </div>
                   </article>
                 {% endfor %}
               {% else %}
+                {# Nessun film per il giorno corrente #}
                 <p class="text-muted">Nessun film in programmazione per il giorno {{ day.date }}.</p>
               {% endif %}
             {% endfor %}
 
+            {# Card finale per link alla lista completa dei film #}
             <a href="{% url 'app_film:lista_film' %}" class="movie-card load-more-card">
               <div class="more-content">
                 <i class="fas fa-plus-circle"></i>
@@ -104,10 +121,12 @@
               </div>
             </a>
           </div>
+
           <button class="carousel-btn next" aria-label="Successivo">›</button>
         </div>
       </section>
 
+      {# ======= Sezione promozioni attive ======= #}
       <section class="promotions">
         <h2><i class="fas fa-percentage"></i> Promozioni</h2>
         <div class="promo-cards">
@@ -131,6 +150,7 @@
     </main>
   </div>
 
+  {# ======= Modale per dettagli film e tooltip sala ======= #}
   <div id="movieModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
       <button id="modalClose">&times;</button>
@@ -139,13 +159,22 @@
     <div id="salaTooltip" class="sala-tooltip" style="display:none;"></div>
   </div>
 
+  {# Inclusione del footer #}
   {% include 'nav_header_footer/footer.html' %}
 {% endblock %}
 
 {# ===================== JS FINO IN FONDO ===================== #}
 {% block extra_js %}
-  <div id="config" data-movie-details-url="{% url 'app_film:movie_details' %}" data-search-film-url="{% url 'app_film:search_film' %}" data-get-options-by-film-url="{% url 'app_film:get_options_by_film' %}" data-get-options-by-film-and-date-url="{% url 'app_film:get_options_by_film_and_date' %}" data-get-options-by-film-and-date-and-time-url="{% url 'app_film:get_options_by_film_and_date_and_time' %}"></div>
+  {# Div contenente le URL da leggere in JS per richieste dinamiche (fetch) #}
+  <div id="config"
+       data-movie-details-url="{% url 'app_film:movie_details' %}"
+       data-search-film-url="{% url 'app_film:search_film' %}"
+       data-get-options-by-film-url="{% url 'app_film:get_options_by_film' %}"
+       data-get-options-by-film-and-date-url="{% url 'app_film:get_options_by_film_and_date' %}"
+       data-get-options-by-film-and-date-and-time-url="{% url 'app_film:get_options_by_film_and_date_and_time' %}">
+  </div>
 
+  {# Inclusione librerie JS, plugin e script personalizzati #}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>

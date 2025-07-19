@@ -2,11 +2,14 @@
 
 <div class="movie-detail">
   <div class="movie-poster-detail">
-    {# Usa direttamente image_url, che è un link completo al poster #}
+    {# Mostra il poster del film usando l'URL completo passato come image_url #}
     <img src="{{ image_url|escape }}" alt="{{ film.titolo|escape }}" style="max-width:100%; height:auto; border-radius:8px; margin-bottom:1em;" />
   </div>
 
+  {# Titolo del film #}
   <h2>{{ film.titolo|escape }}</h2>
+
+  {# Metadati del film: anno, durata e lingua #}
   <ul class="movie-meta">
     <li>
       <strong>Anno:</strong> {{ film.anno }}
@@ -19,13 +22,25 @@
     </li>
   </ul>
 
+  {# Titolo della sezione proiezioni per una specifica data #}
   <h3>Proiezioni del {{ filmDate|escape }}</h3>
 
   {% if showtimes %}
+    {# Lista delle proiezioni disponibili per la data scelta #}
     <ul class="showtimes-list">
       {% for p in showtimes %}
-        <li class="showtime-item" data-numero="{{ p.sala_numero }}" data-tipo="{{ p.sala_tipo|escape }}" data-dim="{{ p.sala_dim }}" data-posti="{{ p.sala_numposti }}" data-file="{{ p.sala_numfile }}" data-posti-fila="{{ p.sala_numpostiperfila }}">
+        <li class="showtime-item"
+            data-numero="{{ p.sala_numero }}"
+            data-tipo="{{ p.sala_tipo|escape }}"
+            data-dim="{{ p.sala_dim }}"
+            data-posti="{{ p.sala_numposti }}"
+            data-file="{{ p.sala_numfile }}"
+            data-posti-fila="{{ p.sala_numpostiperfila }}">
+          
+          {# Orario della proiezione #}
           <span class="showtime-hour">{{ p.ora }}</span>
+
+          {# Informazioni sulla sala (numero e, se presente, icona tipo sala) #}
           <span class="showtime-room">
             Sala {{ p.sala_numero }}
             {% if p.icon_url %}
@@ -36,6 +51,7 @@
       {% endfor %}
     </ul>
   {% else %}
+    {# Messaggio se non ci sono proiezioni per la data selezionata #}
     <p>Al momento non ci sono proiezioni programmate per questa data.</p>
   {% endif %}
 </div>

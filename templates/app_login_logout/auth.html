@@ -2,10 +2,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{# ===================== TITOLO DELLA PAGINA ===================== #}
 {% block title %}
   CodeCrafters - Login / Signup
 {% endblock %}
 
+{# ===================== INCLUSIONE FILE CSS E ICONE ===================== #}
 {% block extra_head %}
   <link rel="icon" href="{% static 'utils/Icon.ico' %}" type="image/x-icon" />
   <link rel="stylesheet" href="{% static 'app_login_logout/login.css' %}" />
@@ -16,22 +18,29 @@
   <link href="https://cdn.jsdelivr.net/npm/flat-icons/css/flat-icons.min.css" rel="stylesheet" />
 {% endblock %}
 
+{# ===================== CONTENUTO DELLA PAGINA ===================== #}
 {% block content %}
+  {# Link per tornare alla home #}
   <a href="{% url 'app_index:index' %}" class="back-arrow slide-in-left"><i class="fas fa-arrow-left"></i> Back</a>
 
   <div class="auth-container">
+    
+    {# Toggle per passare tra Login e Signup (gestito via JS) #}
     <div class="toggle">
       <button id="logBtn" class="active">Log In</button>
       <button id="signBtn">Sign Up</button>
     </div>
 
-    {# ==== FORM LOGIN ==== #}
+    {# ===================== FORM LOGIN ===================== #}
     <form id="loginForm" class="active" method="post" action="{% url 'app_login_logout:login' %}">
       {% csrf_token %}
+      {# Campo email #}
       <div class="form-group">
         <span><i class="fas fa-envelope"></i></span>
         <input type="email" name="email" placeholder="Email" required />
       </div>
+
+      {# Campo password con pulsante mostra/nascondi #}
       <div class="form-group">
         <span><i class="fas fa-lock"></i></span>
         <input type="password" name="password" placeholder="Password" required />
@@ -40,12 +49,17 @@
           <i class="fas fa-eye-slash" style="display: none;"></i>
         </button>
       </div>
+
+      {# Link per recupero password o assistenza #}
       <div class="options">
         <a href="#" id="forgotPasswordLink"><i class="fas fa-key"></i> Forgot password?</a>
         <a href="javascript:void(0)"><i class="fas fa-question-circle"></i> Need help?</a>
       </div>
+
+      {# Pulsante di invio login #}
       <button type="submit" class="submit-btn"><i class="fas fa-sign-in-alt"></i> LOGIN</button>
 
+      {# Login con social network #}
       <div class="social-login">
         <span>Or login with</span>
       </div>
@@ -56,22 +70,28 @@
         <button type="button" class="apple-btn"><i class="fab fa-apple"></i></button>
       </div>
 
+      {# Link per passare al form di registrazione #}
       <div class="footer">
         Don't have an account? <a href="#signup" id="switchToSignup"><i class="fas fa-user-plus"></i> Sign Up</a>
       </div>
     </form>
 
-    {# ==== FORM SIGNUP ==== #}
+    {# ===================== FORM SIGNUP ===================== #}
     <form id="signupForm" method="post" action="{% url 'app_login_logout:signup' %}">
       {% csrf_token %}
+      {# Campo nome utente #}
       <div class="form-group">
         <span><i class="fas fa-user"></i></span>
         <input type="text" name="name" placeholder="Name" required />
       </div>
+
+      {# Campo email #}
       <div class="form-group">
         <span><i class="fas fa-envelope"></i></span>
         <input type="email" name="email" placeholder="Email" required />
       </div>
+
+      {# Campo password con toggle visibilità #}
       <div class="form-group">
         <span><i class="fas fa-lock"></i></span>
         <input type="password" name="password" placeholder="Password" required />
@@ -80,6 +100,8 @@
           <i class="fas fa-eye-slash" style="display: none;"></i>
         </button>
       </div>
+
+      {# Conferma password con toggle visibilità #}
       <div class="form-group">
         <span><i class="fas fa-lock"></i></span>
         <input type="password" name="confirm_password" placeholder="Confirm Password" required />
@@ -88,8 +110,11 @@
           <i class="fas fa-eye-slash" style="display: none;"></i>
         </button>
       </div>
+
+      {# Pulsante invio registrazione #}
       <button type="submit" class="submit-btn"><i class="fas fa-user-edit"></i> REGISTER</button>
 
+      {# Signup con social network #}
       <div class="social-login">
         <span>Or sign up with</span>
       </div>
@@ -100,6 +125,7 @@
         <button type="button" class="apple-btn"><i class="fab fa-apple"></i></button>
       </div>
 
+      {# Link per tornare al form di login #}
       <div class="footer">
         Already have an account? <a href="#login" id="switchToLogin"><i class="fas fa-sign-in-alt"></i> Log In</a>
       </div>
@@ -107,6 +133,7 @@
   </div>
 {% endblock %}
 
+{# ===================== INCLUSIONE SCRIPT JS ===================== #}
 {% block extra_js %}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

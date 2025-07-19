@@ -4,14 +4,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {# Token CSRF disponibile nei meta tag per richieste AJAX #}
   <meta name="csrf-token" content="{{ csrf_token }}">
+
+  {# Titolo della pagina, personalizzabile nei template figli #}
   <title>{% block title %}Titolo di Default{% endblock %}</title>
+
+  {# Blocco per includere stili CSS e head aggiuntivi nei template figli #}
   {% block extra_head %}{% endblock %}
 </head>
 <body>
+
+  {# Blocco principale del contenuto della pagina #}
   {% block content %}{% endblock %}
+
+  {# Blocco per includere script JS aggiuntivi nei template figli #}
   {% block extra_js %}{% endblock %}
+
 </body>
+
+{# Script globale per salvare l’email utente nella variabile JS (per uso client-side) #}
 <script>
   window.userMail = "{{ request.session.mail|default:'' }}";
 </script>

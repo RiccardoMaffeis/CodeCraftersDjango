@@ -1,16 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Seleziona tutte le tab dei nomi tabella e l'overlay di caricamento
     const tabs = document.querySelectorAll('.db-tab');
     const overlay = document.getElementById('loading-overlay');
 
     let currentPage = 1;
-    let currentTable = 'Biglietto';
+    let currentTable = 'Biglietto'; // Tabella predefinita da caricare
 
+    // Mostra solo il contenitore della tabella selezionata
     function showTab(tableName) {
         tabs.forEach(t => t.classList.toggle('active', t.dataset.table === tableName));
         document.querySelectorAll('.db-table-container')
             .forEach(c => c.style.display = c.id === 'tab-' + tableName ? 'block' : 'none');
     }
 
+    // Carica il contenuto HTML della tabella selezionata tramite AJAX
     function loadTable(tableName, page = 1) {
         currentTable = tableName;
         currentPage = page;
@@ -21,19 +24,25 @@ document.addEventListener('DOMContentLoaded', () => {
         xhr.onload = () => {
             const container = document.getElementById('tab-' + tableName);
             if (xhr.status === 200) {
+                // Inserisce l'HTML restituito nella tab corrispondente
                 container.innerHTML = xhr.responseText;
             } else {
+                // In caso di errore, mostra un messaggio nella tab
                 container.innerHTML = `<h2 class="db-title">Tabella ${tableName}</h2>
                                <p class="db-nodata">Errore ${xhr.status}</p>`;
             }
+
+            // Attiva visivamente la tab attuale
             showTab(tableName);
 
+            // Gestione pulsanti di paginazione
             container.querySelectorAll('.page-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     loadTable(currentTable, parseInt(btn.dataset.page, 10));
                 });
             });
 
+            // Gestione input di salto pagina
             const pagination = container.querySelector('.pagination');
             const totalPages = parseInt(pagination.dataset.total, 10);
             const pageInput = pagination.querySelector('.page-input');
@@ -46,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadTable(currentTable, target);
             });
 
+            // Gestione eliminazione riga con conferma SweetAlert
             container.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const table = encodeURIComponent(btn.dataset.table);
@@ -61,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cancelButtonText: 'Annulla'
                     }).then(result => {
                         if (result.isConfirmed) {
+                            // Invio POST per eliminare riga
                             fetch(`/database/delete_row/`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -69,9 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 .then(res => res.json())
                                 .then(data => {
                                     if (data.success) {
+                                        // Successo: ricarica la tabella
                                         Swal.fire('Eliminato!', data.message, 'success')
                                             .then(() => loadTable(currentTable, currentPage));
                                     } else {
+                                        // Errore nel backend
                                         Swal.fire('Errore', data.message, 'error');
                                     }
                                 });
@@ -80,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
+            // Gestione modifica riga (reindirizza a pagina di editing)
             container.querySelectorAll('.btn-edit').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const table = encodeURIComponent(btn.dataset.table);
@@ -89,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
+        // Gestione errori di rete
         xhr.onerror = () => {
             const container = document.getElementById('tab-' + tableName);
             container.innerHTML = `<h2 class="db-title">Tabella ${tableName}</h2>
@@ -97,11 +112,14 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.style.display = 'none';
         };
 
+        // Invia la richiesta
         xhr.send();
     }
 
+    // Carica inizialmente la tabella 'Biglietto'
     loadTable('Biglietto', 1);
 
+    // Aggiunge eventi click a ogni tab per cambiare tabella
     tabs.forEach(tab =>
         tab.addEventListener('click', () => loadTable(tab.dataset.table, 1))
     );

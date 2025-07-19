@@ -2,6 +2,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{# Sezione per caricare file CSS e librerie esterne #}
 {% block extra_head %}
   <link rel="stylesheet" href="{% static 'app_biglietti/biglietti.css' %}" />
   <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
@@ -11,16 +12,20 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
 {% endblock %}
 
+{# Titolo della pagina nel tag <title> del layout base #}
 {% block title %}
   CodeCrafters – Prenotazione Biglietti
 {% endblock %}
 
 {% block content %}
+  {# Inclusione header e navbar condivisi #}
   {% include 'nav_header_footer/header.html' %}
   {% include 'nav_header_footer/navbar.html' %}
 
   <div class="right-content">
     <div class="container">
+      
+      {# Sezione superiore con la barra di avanzamento (step) #}
       <section id="filtro" class="search-section">
         <div class="centralbar">
           <div class="booking-steps">
@@ -32,6 +37,7 @@
         </div>
       </section>
 
+      {# Prima riga: dettagli del film e selezione data/orario/sala #}
       <div class="row row-top">
         <div class="movie-selection">
           <div class="movie-card selected-movie">
@@ -81,6 +87,7 @@
         </div>
       </div>
 
+      {# Seconda riga: griglia visiva dei posti a sedere #}
       <div class="row row-middle">
         <div class="main-content">
           <div class="screen">SCHERMO</div>
@@ -104,6 +111,7 @@
         </div>
       </div>
 
+      {# Terza riga: riepilogo dell’ordine, sconto e pagamento #}
       <div class="row row-bottom">
         <div class="cart-summary">
           <h3>Il tuo ordine:</h3>
@@ -121,9 +129,11 @@
     </div>
   </div>
 
+  {# Inclusione del footer #}
   {% include 'nav_header_footer/footer.html' %}
 {% endblock %}
 
+{# Script JS esterni e personalizzati, caricati a fine pagina #}
 {% block extra_js %}
   <script>
     const userMail = {{ user_mail|default:"null"|safe|json_script }}

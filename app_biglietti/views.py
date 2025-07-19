@@ -1,5 +1,3 @@
-# app_biglietti/views.py
-
 from datetime import date
 from django.core.mail import EmailMessage
 import json
@@ -12,7 +10,9 @@ from app_biglietti.models import Biglietto
 from app_film.models import Film, Proiezione, Sala
 from django.views.decorators.csrf import csrf_exempt
 
+# View principale per la prenotazione dei biglietti
 def prenota_biglietto(request):
+    # Gestione memorizzazione parametri in sessione
     if 'film' in request.GET:
         film_id = int(request.GET.get('film'))
         if request.session.get('film') != film_id:
@@ -41,12 +41,14 @@ def prenota_biglietto(request):
     else:
         sala_param = request.session.get('sala', '')
 
+    # Reindirizzamento se mancano parametri ma sono disponibili nella sessione
     if ( ('film' not in request.GET or 'date' not in request.GET or
           'orario' not in request.GET or 'sala' not in request.GET ) 
          and film_id and date_param and time_param and sala_param ):
         query = f"?film={film_id}&date={date_param}&orario={time_param}&sala={sala_param}"
         return redirect(request.path + query)
 
+    # Recupero dati film
     titolo = ''
     durata = ''
     lingua = ''
@@ -60,6 +62,7 @@ def prenota_biglietto(request):
         except Film.DoesNotExist:
             film = None
 
+        # Recupero immagine film da JSON
         json_path = os.path.join(settings.BASE_DIR, 'static', 'utils', 'film_images.json')
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
@@ -68,6 +71,7 @@ def prenota_biglietto(request):
         except (FileNotFoundError, json.JSONDecodeError):
             poster_url = 'default.jpg'
 
+    # Orari disponibili per il film in quella data
     times = []
     if film_id and date_param:
         qs_times = Proiezione.objects.filter(
@@ -92,12 +96,13 @@ def prenota_biglietto(request):
     }
     return render(request, 'app_biglietti/biglietti.html', context)
 
+# Restituisce l'ID di una proiezione dato film, data e ora
 def get_proiezione_id(request):
     film = request.GET.get('film')
     data = request.GET.get('data')
     ora = request.GET.get('ora')
 
-    # Normalizzazione orario in formato HH:MM:SS
+    # Normalizzazione orario
     if ora:
         parts = ora.split(':')
         if len(parts) >= 2:
@@ -111,6 +116,7 @@ def get_proiezione_id(request):
     if not all([film, data, ora]):
         return JsonResponse({'proiezioneId': None, 'message': 'Parametri mancanti'}, status=400)
 
+    # Ricerca proiezione nel DB
     proiezione = Proiezione.objects.filter(
         filmproiettato=film,
         data=data,
@@ -128,7 +134,8 @@ def get_proiezione_id(request):
             'sala': None,
             'message': 'Proiezione non trovata'
         }, status=404)
-     
+
+# Salva i parametri della prenotazione nella sessione
 def salva_parametri(request):
     if request.method == 'POST':
         try:
@@ -141,7 +148,8 @@ def salva_parametri(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     else:
         return JsonResponse({'status': 'error', 'message': 'Metodo non consentito'}, status=405)
-    
+
+# Restituisce i dati di una sala dato il numero
 def get_sala_data(request):
     sala_id = request.GET.get('id')
 
@@ -156,7 +164,8 @@ def get_sala_data(request):
         })
     except Sala.DoesNotExist:
         return JsonResponse({'error': 'Sala non trovata'}, status=404)
-    
+
+# Restituisce l'elenco dei posti occupati per una proiezione
 def get_posti_occupati(request):
     proiezione_id = request.GET.get('proiezione')
     if not proiezione_id:
@@ -170,6 +179,7 @@ def get_posti_occupati(request):
     ]
     return JsonResponse(posti, safe=False)
 
+# Salva i biglietti acquistati nel database
 def salva_biglietti(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Metodo non consentito'}, status=405)
@@ -189,8 +199,8 @@ def salva_biglietti(request):
 
     try:
         for i, posto in enumerate(posti):
-            fila = posto[0].upper()  # Prima lettera (A, B, C...)
-            numero = int(posto[1:])  # Da posizione 1 in poi (numero)
+            fila = posto[0].upper()  # Lettera della fila
+            numero = int(posto[1:])  # Numero posto
 
             Biglietto.objects.create(
                 numproiezione=proiezione_id,
@@ -217,7 +227,8 @@ def salva_biglietti(request):
             'message': 'Errore DB',
             'error': str(e)
         }, status=500)
-        
+
+# Invia email di conferma prenotazione
 def send_ticket_email(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'method_not_allowed'}, status=405)
@@ -236,6 +247,7 @@ def send_ticket_email(request):
     posti = data.get('posti')
     totale = data.get('totale')
 
+    # Email HTML
     subject = "🎫 Conferma Prenotazione - CodeCrafter"
     html_message = f"""
         <html>
@@ -265,6 +277,7 @@ def send_ticket_email(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+# Elimina i dati salvati nella sessione utente (film, data, orario)
 @csrf_exempt
 def clear_session(request):
     keys_to_clear = ['film', 'date', 'orario']

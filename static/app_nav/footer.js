@@ -1,11 +1,16 @@
+// Quando il DOM è completamente caricato
 document.addEventListener('DOMContentLoaded', function () {
+  // Riferimenti al form della newsletter e all'input email
   const form  = document.getElementById('newsletter-form');
   const email = document.getElementById('newsletter-email');
 
+  // Gestione dell'invio del form
   form.addEventListener('submit', function (e) {
-    e.preventDefault();
+    e.preventDefault(); // Previene l'invio standard del form
 
-    const address = email.value.trim();
+    const address = email.value.trim(); // Rimuove spazi vuoti
+
+    // Validazione: email vuota
     if (!address) {
       Swal.fire({
         icon: 'error',
@@ -19,13 +24,15 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // Invio della richiesta POST al backend per iscrizione newsletter
     fetch('/utils/subscribe_newsletter/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: address })
     })
-    .then(res => res.json().then(body => ({ status: res.status, body })))
+    .then(res => res.json().then(body => ({ status: res.status, body }))) // Parsing della risposta
     .then(({ status, body }) => {
+      // Successo: email registrata
       if (status === 200 && body.status === 'ok') {
         Swal.fire({
           icon: 'success',
@@ -36,7 +43,9 @@ document.addEventListener('DOMContentLoaded', function () {
           timer: 3000,
           showConfirmButton: false
         });
-        form.reset();
+        form.reset(); // Pulisce il campo email
+
+      // Errore: email non valida (controllo lato server)
       } else if (status === 400 && body.status === 'invalid_email') {
         Swal.fire({
           icon: 'error',
@@ -47,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
           timer: 3000,
           showConfirmButton: false
         });
+
+      // Errore generico del server
       } else {
         Swal.fire({
           icon: 'error',
@@ -60,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     })
     .catch(err => {
+      // Gestione errore di rete o JSON malformato
       console.error('Network or parsing error:', err);
       Swal.fire({
         icon: 'error',

@@ -3,6 +3,7 @@
 {% load static %}
 {% load tz %}
 
+{# Blocco per includere file CSS e librerie esterne #}
 {% block extra_head %}
   <link rel="stylesheet" href="{% static 'app_film/film.css' %}" />
   <link rel="stylesheet" href="{% static 'app_nav/style.css' %}" />
@@ -13,15 +14,19 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
 {% endblock %}
 
+{# Titolo visualizzato nel tag <title> #}
 {% block title %}
   CodeCrafters - Programmazione Film
 {% endblock %}
 
 {% block content %}
+  {# Inclusione header e navbar condivisi #}
   {% include 'nav_header_footer/header.html' %}
   {% include 'nav_header_footer/navbar.html' %}
 
   <div class="right-content">
+    
+    {# Sezione per filtro data (iniziale e finale) dei film da visualizzare #}
     <section id="filtro" class="search-section">
       <div class="container">
         <form id="film-filter-form" class="search-form" method="get">
@@ -38,28 +43,45 @@
       </div>
     </section>
 
+    {# Contenitore dei film per ogni giorno selezionato nel filtro #}
     <div class="container">
       <div id="movies-container" class="movies-grid">
+
+        {# Ciclo su ogni giorno che contiene film in programmazione #}
         {% for day in date_films %}
           <div class="day-section">
             <h3>{{ day.date }}</h3>
+
+            {# Se sono presenti film in quella data #}
             {% if day.films %}
               <div class="carousel-wrapper">
                 <button class="carousel-btn prev" aria-label="Precedente">‹</button>
+
                 <div class="movie-carousel">
+                  {# Ciclo su ciascun film del giorno #}
                   {% for film in day.films %}
                     <article class="movie-card">
-                      <a href="{% url 'app_biglietti:prenota_biglietto' %}?film={{ film.codice }}&date={{ day.date|urlencode }}" class="ticket-btn" title="Acquista biglietto"><img src="https://cdn-icons-png.flaticon.com/128/3702/3702886.png" alt="Ticket" class="ticket-icon" /></a>
+                      
+                      {# Pulsante per prenotare il biglietto, passa film e data via GET #}
+                      <a href="{% url 'app_biglietti:prenota_biglietto' %}?film={{ film.codice }}&date={{ day.date|urlencode }}" class="ticket-btn" title="Acquista biglietto">
+                        <img src="https://cdn-icons-png.flaticon.com/128/3702/3702886.png" alt="Ticket" class="ticket-icon" />
+                      </a>
 
+                      {# Locandina del film #}
                       <div class="movie-poster" style="background-image: url('{{ film.imgUrl }}')"></div>
+
+                      {# Titolo del film #}
                       <div class="movie-info">
                         <h2>{{ film.titolo }}</h2>
                       </div>
                     </article>
                   {% endfor %}
                 </div>
+
                 <button class="carousel-btn next" aria-label="Successivo">›</button>
               </div>
+
+            {# Nessun film disponibile per la data corrente #}
             {% else %}
               <p class="text-muted">Nessun film in programmazione per il giorno {{ day.date }}.</p>
             {% endif %}
@@ -69,9 +91,11 @@
     </div>
   </div>
 
+  {# Inclusione del footer condiviso #}
   {% include 'nav_header_footer/footer.html' %}
 {% endblock %}
 
+{# Blocco per includere script JS (librerie + personalizzati) #}
 {% block extra_js %}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>CodeCrafters - Modifica {{ table }}</title>
+    
+    {# CSS specifico per la pagina di modifica + icona #}
     <link rel="stylesheet" href="{% static 'app_database/edit_row.css' %}">
     <link rel="icon" href="{% static 'immagini/Icon.ico' %}" />
 </head>
@@ -13,12 +15,15 @@
 <div class="edit-container">
     <h2>Modifica {{ table }}</h2>
 
+    {# Mostra eventuale messaggio di errore #}
     {% if msg %}
         <div class="error">{{ msg }}</div>
     {% endif %}
 
     <form method="POST">
         {% csrf_token %}
+        
+        {# Ciclo su tutte le colonne della riga da modificare #}
         {% for col in cols %}
             {% with value=row|get_item:col %}
                 <div class="form-group">
@@ -26,13 +31,16 @@
                         {{ col|capfirst|replace:"_: " }}{% if col == pk %} (PK){% endif %}:
                     </label>
 
+                    {# Campo non modificabile: chiave primaria o campo readonly #}
                     {% if col == pk or table == 'Biglietto' and col in readonly_biglietto or table == 'Sala' and col in readonly_sala %}
                         <input type="hidden" name="{{ col }}" value="{{ value }}">
                         <input type="text" id="{{ col }}" value="{{ value }}" readonly disabled>
 
+                    {# Campo 'dim' (dimensione sala) come numero intero obbligatorio #}
                     {% elif table == 'Sala' and col == 'dim' %}
                         <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="0" step="1" required>
 
+                    {# Campo 'tipo' della sala (dropdown) #}
                     {% elif table == 'Sala' and col == 'tipo' %}
                         <select id="{{ col }}" name="{{ col }}" required>
                             <option value="">-- Seleziona --</option>
@@ -40,15 +48,19 @@
                             <option value="3-D" {% if value == '3-D' %}selected{% endif %}>3-D</option>
                         </select>
 
+                    {# Campo 'sala' della proiezione (numero intero tra 1 e 15) #}
                     {% elif table == 'Proiezione' and col == 'sala' %}
                         <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="1" max="15" required>
 
+                    {# Campo 'filmProiettato' della proiezione #}
                     {% elif table == 'Proiezione' and col == 'filmProiettato' %}
                         <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="1" max="100" step="1" required>
 
+                    {# Campo 'data' della proiezione (tipo data) #}
                     {% elif table == 'Proiezione' and col == 'data' %}
                         <input type="date" id="{{ col }}" name="{{ col }}" value="{{ value|date:'Y-m-d' }}" required>
 
+                    {# Campo 'ora' della proiezione (dropdown con orari predefiniti) #}
                     {% elif table == 'Proiezione' and col == 'ora' %}
                         <select id="ora" name="ora" required>
                             <option value="">-- Seleziona l'orario --</option>
@@ -57,6 +69,7 @@
                             {% endfor %}
                         </select>
 
+                    {# Campo 'prezzo' del biglietto (dropdown con valori fissi) #}
                     {% elif table == 'Biglietto' and col == 'prezzo' %}
                         <select id="prezzo" name="prezzo" required>
                             <option value="">-- Seleziona prezzo --</option>
@@ -64,12 +77,15 @@
                             <option value="18" {% if value == '18' %}selected{% endif %}>€18</option>
                         </select>
 
+                    {# Campo generico numerico (convalidato) #}
                     {% elif col in numeric_fields %}
                         <input type="number" id="{{ col }}" name="{{ col }}" value="{{ value }}" min="0" step="1" required>
 
+                    {# Campo 'dataVendita' del biglietto (tipo data) #}
                     {% elif col == 'dataVendita' %}
                         <input type="date" id="{{ col }}" name="{{ col }}" value="{{ value|date:'Y-m-d' }}" required>
 
+                    {# Campo generico di testo #}
                     {% else %}
                         <input type="text" id="{{ col }}" name="{{ col }}" value="{{ value }}" required>
                     {% endif %}
@@ -77,6 +93,7 @@
             {% endwith %}
         {% endfor %}
 
+        {# Gestione campo immagine solo per tabella Film #}
         {% if table == 'Film' %}
             <div class="form-group">
                 <label for="image_link">Link immagine:</label>
@@ -90,6 +107,7 @@
             {% endif %}
         {% endif %}
 
+        {# Pulsanti per invio o annullamento della modifica #}
         <div class="form-actions">
             {% csrf_token %}
             <button type="submit" class="btn-save">Salva modifiche</button>

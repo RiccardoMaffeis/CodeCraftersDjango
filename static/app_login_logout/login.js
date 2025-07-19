@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Selezione dei principali elementi DOM per login/signup/recupero password
   const logBtn = document.getElementById('logBtn')
   const signBtn = document.getElementById('signBtn')
   const loginForm = document.getElementById('loginForm')
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const switchToLogin = document.getElementById('switchToLogin')
   const forgotLink = document.getElementById('forgotPasswordLink')
 
+  // Mostra il form di login
   function showLogin () {
     logBtn.classList.add('active')
     signBtn.classList.remove('active')
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     signupForm.classList.remove('active')
   }
 
+  // Mostra il form di registrazione
   function showSignup () {
     signBtn.classList.add('active')
     logBtn.classList.remove('active')
@@ -22,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginForm.classList.remove('active')
   }
 
+  // Eventi click per passare da login a signup e viceversa
   logBtn.addEventListener('click', showLogin)
   signBtn.addEventListener('click', showSignup)
   switchToSignup?.addEventListener('click', e => {
@@ -33,17 +37,18 @@ document.addEventListener('DOMContentLoaded', () => {
     showLogin()
   })
 
+  // Se l'URL contiene "#signup", mostra direttamente il form di registrazione
   if (window.location.hash === '#signup') {
     showSignup()
   }
 
+  // Gestione mostra/nascondi password (toggle)
   document.querySelectorAll('.show-password-btn').forEach(btn => {
     btn.addEventListener('click', function () {
       const input = this.parentElement.querySelector('input')
       const isPassword = input.type === 'password'
 
       input.type = isPassword ? 'text' : 'password'
-
       this.classList.toggle('active')
 
       const newLabel = isPassword ? 'Hide password' : 'Show password'
@@ -53,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
-  // Registrazione
+  // ==== REGISTRAZIONE UTENTE ====
   document.getElementById('signupForm').addEventListener('submit', async e => {
     e.preventDefault()
     const inputs = e.target.querySelectorAll(
@@ -64,15 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = inputs[2].value
     const confirm = inputs[3].value
 
+    // Verifica che le password coincidano
     if (password !== confirm)
       return showCustomAlert('error', 'Le password non coincidono!')
 
+    // Invia richiesta POST al backend Django per la registrazione
     const res = await fetch('/login/auth_register/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, mail, password })
     })
 
+    // Parsing della risposta
     const text = await res.text()
     console.log('🔍 RISPOSTA SERVER GREZZA:', text)
     let result
@@ -83,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return
     }
 
+    // Gestione risposta: successo o errore
     if (result.success) {
       showCustomAlert('success', 'Registrazione completata!')
       e.target.reset()
@@ -95,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  // Login
+  // ==== LOGIN UTENTE ====
   document.getElementById('loginForm').addEventListener('submit', async e => {
     e.preventDefault()
     const inputs = e.target.querySelectorAll(
@@ -104,12 +113,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const mail = inputs[0].value.trim()
     const password = inputs[1].value
 
+    // Invia richiesta POST al backend Django per login
     const res = await fetch('/login/auth_login/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mail, password })
     })
 
+    // Parsing risposta
     const text = await res.text()
     console.log('🔍 RISPOSTA SERVER GREZZA:', text)
     let result
@@ -120,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return
     }
 
+    // Se successo, reindirizza alla home; altrimenti mostra errore
     if (result.success) {
       window.location.href = '/'
     } else {
@@ -127,9 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
+  // ==== RECUPERO PASSWORD ====
   forgotLink?.addEventListener('click', async e => {
     e.preventDefault()
 
+    // Mostra input email con SweetAlert2
     const { value: email } = await Swal.fire({
       title: 'Recupero Password',
       input: 'email',
@@ -143,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!email) return
 
+    // Invia richiesta al backend per avviare il recupero password
     try {
       const res = await fetch('/login/recover_password/', {
         method: 'POST',
@@ -158,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
+  // ==== FUNZIONE GENERICA PER MOSTRARE ALERT CON SWEETALERT ====
   function showCustomAlert (icon, title, text = '') {
     Swal.fire({
       icon,

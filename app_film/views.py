@@ -1,5 +1,3 @@
-# app_film/views.py
-
 import json
 import os
 from datetime import datetime, timedelta
@@ -8,11 +6,13 @@ from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 from .models import Film, Proiezione, Sala
 
+# View per restituire in formato JSON i film programmati in un intervallo di date
 def film_schedule(request):
     start_date_str = request.GET.get("start_date", "")
     end_date_str = request.GET.get("end_date", "")
     today = datetime.now().date()
-    print("CHIAMATA film_schedule:", start_date_str, "->", end_date_str)
+
+    # Parsing delle date, con fallback alla settimana corrente
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else today - timedelta(days=today.weekday())
     except ValueError:
@@ -26,6 +26,7 @@ def film_schedule(request):
     if start_date > end_date:
         start_date, end_date = end_date, start_date
 
+    # Costruisce lista delle date escluse quelle di martedì e mercoledì
     date_list = []
     current = start_date
     while current <= end_date:
@@ -33,6 +34,7 @@ def film_schedule(request):
             date_list.append(current.strftime("%d/%m/%Y"))
         current += timedelta(days=1)
 
+    # Carica le immagini dei film da file JSON
     json_path = os.path.join(settings.BASE_DIR, "static", "utils", "film_images.json")
     try:
         with open(json_path, "r", encoding="utf-8") as f:
@@ -40,6 +42,7 @@ def film_schedule(request):
     except (FileNotFoundError, json.JSONDecodeError):
         img_data = {}
 
+    # Raccoglie film per ogni data disponibile
     date_films = []
     for date_str in date_list:
         proiez_qs = Proiezione.objects.filter(data=date_str).select_related("filmproiettato")
@@ -57,11 +60,13 @@ def film_schedule(request):
 
     return JsonResponse({"date_films": date_films})
 
+# View per mostrare la pagina film.html con lista film per settimana
 def lista_film(request):
     start_str = request.GET.get("start-date")
     end_str = request.GET.get("end-date")
     date_format = "%Y-%m-%d"
 
+    # Parsing delle date
     if start_str and end_str:
         try:
             start_date = datetime.strptime(start_str, date_format).date()
@@ -69,18 +74,19 @@ def lista_film(request):
         except ValueError:
             start_date = end_date = None
 
-        if start_date and end_date:
-            if start_date > end_date:
-                start_date, end_date = end_date, start_date
+        if start_date and end_date and start_date > end_date:
+            start_date, end_date = end_date, start_date
     else:
         start_date = end_date = None
 
+    # Se date non valide, default a settimana corrente
     today = datetime.now().date()
     if not start_date or not end_date:
         monday = today - timedelta(days=today.weekday())
         start_date = monday
         end_date = monday + timedelta(days=6)
 
+    # Crea lista date (esclude martedì e mercoledì)
     dates = []
     ts = start_date
     while ts <= end_date:
@@ -88,6 +94,7 @@ def lista_film(request):
             dates.append(ts.strftime("%d/%m/%Y"))
         ts += timedelta(days=1)
 
+    # Carica immagini film
     json_path = os.path.join(settings.BASE_DIR, "static", "utils", "film_images.json")
     try:
         with open(json_path, encoding="utf-8") as f:
@@ -95,6 +102,7 @@ def lista_film(request):
     except (FileNotFoundError, json.JSONDecodeError):
         img_data = {}
 
+    # Costruisce dizionario film per ogni data
     date_films = []
     for date_str in dates:
         qs = (
@@ -128,6 +136,7 @@ def lista_film(request):
         },
     )
 
+# View che restituisce i dettagli di un film e gli orari di proiezione per una data specifica
 def movie_details(request):
     film_id = request.GET.get("film")
     date_str = request.GET.get("date")
@@ -135,6 +144,7 @@ def movie_details(request):
     if not film_id or not date_str:
         return HttpResponseBadRequest("Parametri mancanti: 'film' e/o 'date'")
 
+    # Carica immagine dal JSON
     json_path = os.path.join(settings.BASE_DIR, "static", "utils", "film_images.json")
     try:
         with open(json_path, "r", encoding="utf-8") as f:
@@ -144,6 +154,7 @@ def movie_details(request):
 
     image_url = img_data.get(str(film_id), "")
 
+    # Carica film e proiezioni
     film = get_object_or_404(Film, pk=film_id)
 
     proiezioni_qs = (
@@ -152,11 +163,13 @@ def movie_details(request):
         .order_by("ora")[:10]
     )
 
+    # Mappa tipo sala -> icona
     icon_map = {
         "3-D": "https://cdn-icons-png.flaticon.com/128/83/83596.png",
         "tradizionale": "https://cdn-icons-png.flaticon.com/128/83/83467.png",
     }
 
+    # Raccoglie orari e info sala
     showtimes = []
     for p in proiezioni_qs:
         sala = p.sala
@@ -188,7 +201,7 @@ def movie_details(request):
     }
     return render(request, "app_film/movie_details.html", context)
 
-
+# API per suggerimenti ricerca film
 def search_film(request):
     term = request.GET.get("term", "").strip()
     if term:
@@ -216,16 +229,15 @@ def search_film(request):
 
     return JsonResponse(results, safe=False)
 
+# API che restituisce sale, date e orari in base al film selezionato
 def get_options_by_film(request):
     film_id = request.GET.get('film_id')
     if not film_id:
         return JsonResponse({'error': 'Missing film_id'}, status=400)
 
     sale_qs = Sala.objects.filter(proiezioni__filmproiettato=film_id).distinct().values('numero', 'tipo')
-
     date_qs = Proiezione.objects.filter(filmproiettato=film_id).values_list('data', flat=True).distinct()
     orari_qs = Proiezione.objects.filter(filmproiettato=film_id).values_list('ora', flat=True).distinct()
-
     date = [{'data': d} for d in date_qs]
 
     return JsonResponse({
@@ -233,7 +245,8 @@ def get_options_by_film(request):
         'date': date,
         'orari': list(orari_qs)
     })
-    
+
+# API che filtra sale e orari in base a film + data
 def get_options_by_film_and_date(request):
     film_id = request.GET.get('film_id')
     data = request.GET.get('data')
@@ -256,10 +269,10 @@ def get_options_by_film_and_date(request):
             'sale': list(sale_qs),
             'orari': list(orari_qs)
         })
-
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+# API che filtra le sale in base a film + data + orario
 def get_options_by_film_and_date_and_time(request):
     film_id = request.GET.get("film_id")
     data = request.GET.get("data")

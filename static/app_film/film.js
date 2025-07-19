@@ -1,8 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM completamente caricato')
 
+  // Inizializza gestione date nei filtri
   inizializzaFormDate()
+
+  // Inizializza gestione del submit del form con AJAX
   inizializzaFormSubmit()
+
+  // Inizializza funzionalità del carosello
   inizializzaCarousel()
 })
 
@@ -12,6 +17,7 @@ function inizializzaFormDate () {
   const form = document.querySelector('.search-form')
 
   if (startDateInput && endDateInput) {
+    // Imposta la data minima di fine uguale a quella di inizio
     startDateInput.addEventListener('change', function () {
       endDateInput.min = this.value || endDateInput.getAttribute('min') || ''
       if (endDateInput.value && endDateInput.value < this.value) {
@@ -19,6 +25,7 @@ function inizializzaFormDate () {
       }
     })
 
+    // Verifica che la data di fine non sia antecedente all'inizio
     endDateInput.addEventListener('change', function () {
       if (startDateInput.value && this.value < startDateInput.value) {
         showCustomAlert(
@@ -31,6 +38,7 @@ function inizializzaFormDate () {
       }
     })
 
+    // Controllo ulteriore al submit del form
     if (form) {
       form.addEventListener('submit', function (e) {
         if (
@@ -56,11 +64,14 @@ function inizializzaFormSubmit () {
 
   if (!form || !container) return
 
+  // Submit asincrono del form
   form.addEventListener('submit', e => {
     e.preventDefault()
+
     const params = new URLSearchParams(new FormData(form))
     console.log('Submit film_schedule con params:', params.toString())
 
+    // Chiamata AJAX per ottenere i film filtrati
     fetch(`/film/film_schedule/?${params}`)
       .then(res => {
         console.log('Risposta status:', res.status)
@@ -83,6 +94,8 @@ function renderMoviesGrid (dateFilms) {
   if (!container) return
 
   let html = ''
+
+  // Per ogni giorno con film associati
   dateFilms.forEach(group => {
     html += `<div class="day-section"><h3>${group.date}</h3>`
     if (group.films.length > 0) {
@@ -91,6 +104,7 @@ function renderMoviesGrid (dateFilms) {
           <button class="carousel-btn prev" aria-label="Precedente">‹</button>
           <div class="movie-carousel">`
 
+      // Crea una card per ciascun film
       group.films.forEach(film => {
         html += `
           <article class="movie-card">
@@ -115,13 +129,16 @@ function renderMoviesGrid (dateFilms) {
           <button class="carousel-btn next" aria-label="Successivo">›</button>
         </div>`
     } else {
+      // Nessun film per quel giorno
       html += `<p class="text-muted">Nessun film in programmazione per il giorno ${group.date}.</p>`
     }
     html += `</div>`
   })
 
   container.innerHTML = html
-  inizializzaCarousel() // Reinizializza carousel dopo aggiornamento DOM
+
+  // Dopo aver aggiornato il DOM, reinizializza i caroselli
+  inizializzaCarousel()
 }
 
 function inizializzaCarousel () {
@@ -132,6 +149,7 @@ function inizializzaCarousel () {
 
     if (!carousel || !prevBtn || !nextBtn) return
 
+    // Calcola lo scroll basato sulla larghezza della card + gap
     const calculateScrollAmount = () => {
       const cards = carousel.querySelectorAll('.movie-card')
       if (cards.length === 0) return 0
@@ -142,14 +160,18 @@ function inizializzaCarousel () {
     }
 
     let scrollAmount = calculateScrollAmount()
+
+    // Ricalcola in caso di resize
     window.addEventListener('resize', () => {
       scrollAmount = calculateScrollAmount()
     })
 
+    // Funzione per scrollare il carosello a sinistra o destra
     const scrollCarousel = direction => {
       const currentScroll = carousel.scrollLeft
       const maxScroll = carousel.scrollWidth - carousel.clientWidth
 
+      // Disabilita pulsanti se si raggiungono i limiti
       prevBtn.disabled = direction === -1 && currentScroll <= 0
       nextBtn.disabled = direction === 1 && currentScroll >= maxScroll - 1
 
@@ -161,9 +183,11 @@ function inizializzaCarousel () {
       }
     }
 
+    // Eventi click per scorrere
     prevBtn.addEventListener('click', () => scrollCarousel(-1))
     nextBtn.addEventListener('click', () => scrollCarousel(1))
 
+    // Aggiorna stato dei pulsanti durante lo scroll
     carousel.addEventListener(
       'scroll',
       () => {
@@ -175,6 +199,7 @@ function inizializzaCarousel () {
       { passive: true }
     )
 
+    // Inizializza lo stato dei pulsanti
     carousel.dispatchEvent(new Event('scroll'))
   })
 }

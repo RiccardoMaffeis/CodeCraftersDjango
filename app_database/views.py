@@ -9,6 +9,7 @@ from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from CodeCraftersDjango import settings
 
+# View per ottenere i dati di una tabella e visualizzarli in HTML con paginazione
 def get_table_data(request):
     mail = request.session.get('mail', '')
     if mail != 'admin@gmail.com':
@@ -23,6 +24,7 @@ def get_table_data(request):
     if table not in allowed_tables:
         return HttpResponseBadRequest('Tabella non valida')
 
+    # Definizione colonne e chiavi primarie
     columns = {
         "Biglietto": ["numProiezione", "numFila", "numPosto", "dataVendita", "prezzo", "email", "id"],
         "Film": ["codice", "titolo", "anno", "durata", "lingua"],
@@ -39,13 +41,16 @@ def get_table_data(request):
     }
 
     with connection.cursor() as cursor:
+        # Conta righe per calcolo paginazione
         cursor.execute(f'SELECT COUNT(*) FROM "{table}"')
         total_rows = cursor.fetchone()[0]
         total_pages = max(1, math.ceil(total_rows / per_page))
 
+        # Query dati per pagina corrente
         cursor.execute(f'SELECT * FROM "{table}" LIMIT %s OFFSET %s', [per_page, offset])
         rows = cursor.fetchall()
 
+        # Inizio HTML
         html = f"<h2 class='db-title'>Tabella {table}</h2>"
 
         if rows:
@@ -61,6 +66,8 @@ def get_table_data(request):
                     html += f"<td>{escape(str(row_dict.get(col, '')))}</td>"
 
                 id_value = escape(str(row_dict[pks[table]]))
+
+                # Bottone elimina solo per alcune tabelle
                 if table in ['Biglietto', 'Utente']:
                     html += f"""
                         <td class='delete-cell'>
@@ -69,6 +76,7 @@ def get_table_data(request):
                             </button>
                         </td>
                     """
+                # Bottone modifica per tutte le tabelle
                 html += f"""
                     <td class='edit-cell'>
                         <button class='btn-edit' data-table='{table}' data-id='{id_value}' title='Modifica'>
@@ -82,6 +90,7 @@ def get_table_data(request):
         else:
             html += f"<p class='db-nodata'>Nessun dato nella tabella {table}.</p>"
 
+        # Paginazione HTML
         html += f"""
             <div class='pagination' data-total='{total_pages}'>
               <div class='page-left'>
@@ -100,7 +109,7 @@ def get_table_data(request):
 
     return HttpResponse(html)
 
-
+# API per eliminare un record (solo per Utente e Biglietto)
 @csrf_exempt
 def delete_row(request):
     mail = request.session.get('mail', '')
@@ -124,13 +133,14 @@ def delete_row(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'Errore durante eliminazione'})
 
-
+# View per modificare un record di qualsiasi tabella ammessa
 def edit_row_view(request):
     numeric_fields = ['anno', 'durata', 'numPosti']
     mail = request.session.get('mail', '')
     if mail != 'admin@gmail.com':
         return HttpResponseForbidden("Accesso negato: solo l'amministratore può modificare i dati.")
 
+    # Definizione schema tabelle e campi di sola lettura
     schema = {
         'Biglietto': {'cols': ['numProiezione', 'numFila', 'numPosto', 'dataVendita', 'prezzo', 'email', 'id'], 'pk': 'id'},
         'Film': {'cols': ['codice', 'titolo', 'anno', 'durata', 'lingua'], 'pk': 'codice'},
@@ -152,6 +162,7 @@ def edit_row_view(request):
     pk = model['pk']
     cols = model['cols']
 
+    # Recupera dati del record da modificare
     with connection.cursor() as cursor:
         col_string = ', '.join([f'"{col}"' for col in cols])
         cursor.execute(f'SELECT {col_string} FROM "{table}" WHERE "{pk}" = %s', [pk_value])
@@ -165,6 +176,7 @@ def edit_row_view(request):
         values = []
         for col in cols:
             raw = request.POST.get(col, '').strip()
+            # Conversione data se Proiezione
             if table == 'Proiezione' and col == 'data':
                 try:
                     raw = datetime.datetime.strptime(raw, '%Y-%m-%d').strftime('%d/%m/%Y')
@@ -181,6 +193,7 @@ def edit_row_view(request):
             except Exception as e:
                 msg = f"Errore durante l'aggiornamento: {str(e)}"
             else:
+                # Se è un film e presente il link immagine, aggiornare JSON
                 if table == 'Film' and 'image_link' in request.POST:
                     image_link = request.POST['image_link'].strip()
                     img_file = os.path.join(settings.BASE_DIR, 'static', 'utils', 'film_images.json')
@@ -194,6 +207,7 @@ def edit_row_view(request):
                         json.dump(film_images, f, indent=2, ensure_ascii=False)
                 return redirect('/database/')
 
+    # Caricamento immagine film (se esiste)
     film_image = ''
     if table == 'Film':
         img_file = os.path.join(settings.BASE_DIR, 'static', 'utils', 'film_images.json')
@@ -216,7 +230,7 @@ def edit_row_view(request):
         'numeric_fields': numeric_fields,
     })
 
-
+# View principale per visualizzare la pagina database.html
 def database_dashboard(request):
     mail = request.session.get('mail', '')
     is_admin = (mail == 'admin@gmail.com')

@@ -1,10 +1,16 @@
 {# templates/nav_header_footer/header.html #}
 {% load static %}
+
 <header class="main-header">
   <div class="header-content">
+    
+    {# ======= Logo del sito ======= #}
     <h1 class="logo">Code<span>Crafters</span></h1>
+
+    {# ======= Area utente: login/logout o nome utente visibile ======= #}
     <div class="user-actions">
       {% if request.session.nome %}
+        {# Se l'utente è loggato, mostra il nome e il pulsante di logout #}
         <div class="user-area">
           <span class="user-name">{{ request.session.nome }}</span>
           <form method="post" action="{% url 'app_login_logout:logout' %}">
@@ -16,12 +22,14 @@
           </form>
         </div>
       {% else %}
+        {# Se non è loggato, mostra pulsanti login e signup #}
         <a href="{% url 'app_login_logout:auth' %}" class="btn-login"><i class="fas fa-user"></i> Login</a>
         <a href="{% url 'app_login_logout:auth' %}#signup" class="btn-register">SignUp</a>
       {% endif %}
     </div>
   </div>
 
+  {# ======= Variabile JS con email utente se autenticato (utile per frontend) ======= #}
   {% if user.is_authenticated %}
     <script>
       window.userMail = '{{ user.email|escapejs }}'
